@@ -110,6 +110,11 @@ include '../includes/header.php';
         <p>Network-wide oversight of cold-chain blood unit transfer requests, dispatch, and receipt.</p>
         <span class="btn mt-10">Open</span>
     </a>
+    <a href="<?php echo baseUrl(); ?>/admin/clinical_trials.php" class="card no-underline text-inherit">
+        <h2>Clinical Trials</h2>
+        <p>Create and manage consented rare-blood / clinical recruitment campaigns with eligibility matching.</p>
+        <span class="btn mt-10">Open</span>
+    </a>
 </div>
 
 <?php include '../includes/footer.php'; ?>

@@ -198,6 +198,7 @@ include '../includes/header.php';
                 <a href="<?php echo baseUrl(); ?>/donor/submit_testimonial.php" class="btn btn-small btn-secondary w-full text-center">Share Your Story</a>
                 <a href="<?php echo baseUrl(); ?>/donor/notification_prefs.php" class="btn btn-small btn-secondary w-full text-center">Notification Preferences</a>
                 <a href="<?php echo baseUrl(); ?>/donor/component_registry.php" class="btn btn-small btn-secondary w-full text-center">Component Registries</a>
+                <a href="<?php echo baseUrl(); ?>/donor/clinical_trials.php" class="btn btn-small btn-secondary w-full text-center">Clinical Trials</a>
             </div>
         </div>
     </div>
