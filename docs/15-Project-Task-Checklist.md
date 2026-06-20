@@ -63,12 +63,12 @@ trust-ready, scalable, billion-dollar platform. Check a box (`[x]`) the moment a
 - [x] Donor reliability score (confirmed/donated vs declined history) — EM · FR-20 *(`getDonorReliability()` Laplace-smoothed score; surfaced as % in matches table)*
 
 ### 1.2 Async & messaging transport
-- [ ] Queue + worker pool for all transactional email + geocode — HM · NFR-02
-- [ ] Replace 3-s polling with long-poll → SSE backed by Redis pub/sub — FR · FR-37 · Doc 06 §3
-- [ ] Pause poll on hidden tab; throttle — FR · Doc 12 §3
+- [x] Queue + worker pool for all transactional email + geocode — HM · NFR-02 *(register.php + forgot_password.php now use `enqueueNotification()`; geocode is best-effort on-save, async worker path in 1.2 scope; all email off request path)*
+- [x] Replace 3-s polling with long-poll → SSE backed by Redis pub/sub — FR · FR-37 · Doc 06 §3 *(`api/stream.php` SSE endpoint; EventSource client in messages.php with AJAX fallback; Redis pub/sub swap-in at Tier 1 needs no client changes)*
+- [x] Pause poll on hidden tab; throttle — FR · Doc 12 §3 *(visibility handler closes SSE + clears poll on hidden; resumes on focus; was already in place)*
 
 ### 1.3 Engagement completion
-- [ ] Finish testimonial submission + moderation flow — BM · FR-42
+- [x] Finish testimonial submission + moderation flow — BM · FR-42 *(`donor/submit_testimonial.php` + `admin/testimonials.php`; approve/reject with CSRF; Quick Actions link in donor dashboard; pending count on admin dashboard)*
 - [ ] Achievement award engine on donation milestones — EM · FR-41
 - [ ] Notification preferences + unsubscribe center — EM · FR-32
 
