@@ -1,0 +1,39 @@
+{
+  "name": "LifeLine Blood Network",
+  "short_name": "LifeLine",
+  "description": "Connect blood donors with hospitals and blood banks in real time.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#b91c1c",
+  "orientation": "portrait-primary",
+  "lang": "en",
+  "icons": [
+    {
+      "src": "assets/images/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/images/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Find Donors",
+      "url": "/find_donors.php",
+      "description": "Search for compatible blood donors near you"
+    },
+    {
+      "name": "Emergency SOS",
+      "url": "/emergency_sos.php",
+      "description": "Send an urgent blood request notification"
+    }
+  ],
+  "categories": ["health", "medical"],
+  "screenshots": []
+}
