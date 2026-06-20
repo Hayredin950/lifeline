@@ -21,16 +21,19 @@ $flash = getFlash();
     <meta name="apple-mobile-web-app-title" content="LifeLine">
 </head>
 <body>
-<header>
+<!-- Skip navigation link (WCAG 2.4.1) -->
+<a href="#main-content" class="skip-link">Skip to main content</a>
+
+<header role="banner">
     <div class="container nav-container">
-        <a href="<?php echo baseUrl(); ?>/index.php" class="logo">
-            <span class="logo-icon">&#9764;</span>
+        <a href="<?php echo baseUrl(); ?>/index.php" class="logo" aria-label="LifeLine Blood Network — home">
+            <span class="logo-icon" aria-hidden="true">&#9764;</span>
             LifeLine
         </a>
-        <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Toggle menu" aria-expanded="false">
-            <span></span><span></span><span></span>
+        <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="primary-nav">
+            <span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span>
         </button>
-        <nav class="nav-links">
+        <nav class="nav-links" id="primary-nav" aria-label="Primary navigation">
             <a href="<?php echo baseUrl(); ?>/index.php" class="<?php echo isActivePage('index.php') ? 'active' : ''; ?>">Home</a>
             <a href="<?php echo baseUrl(); ?>/find_donors.php" class="<?php echo isActivePage('find_donors.php') ? 'active' : ''; ?>">Find Donors</a>
             <a href="<?php echo baseUrl(); ?>/blood_banks.php" class="<?php echo isActivePage('blood_banks.php') ? 'active' : ''; ?>">Blood Banks</a>
@@ -78,9 +81,9 @@ $flash = getFlash();
         </nav>
     </div>
 </header>
-<main class="container<?php echo basename($_SERVER['PHP_SELF']) === 'messages.php' ? ' container-wide' : ''; ?>">
+<main id="main-content" class="container<?php echo basename($_SERVER['PHP_SELF']) === 'messages.php' ? ' container-wide' : ''; ?>">
     <?php if ($flash): ?>
-        <div class="alert alert-<?php echo $flash['type']; ?>">
+        <div class="alert alert-<?php echo $flash['type']; ?>" role="alert" aria-live="assertive">
             <?php echo $flash['message']; // Message can contain HTML like <br> ?>
         </div>
     <?php endif; ?>

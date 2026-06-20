@@ -2960,3 +2960,100 @@ footer ul li a:hover {
     table { font-size: 0.8rem; }
     th, td { padding: 10px 8px; }
 }
+
+/* ==========================================================
+   WCAG 2.1 AA Accessibility additions (2.10)
+   ========================================================== */
+
+/* Screen-reader-only utility (used for captions, off-screen labels) */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* 2.4.1 — Skip navigation link */
+.skip-link {
+    position: absolute;
+    top: -100%;
+    left: 0;
+    z-index: 9999;
+    padding: 0.5rem 1rem;
+    background: var(--crimson);
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.95rem;
+    border-radius: 0 0 4px 0;
+    text-decoration: none;
+    transition: top 0.1s;
+}
+.skip-link:focus {
+    top: 0;
+    outline: 3px solid #fff;
+    outline-offset: 2px;
+}
+
+/* 2.4.7 — Keyboard focus visible on all interactive elements */
+:focus-visible {
+    outline: 3px solid var(--crimson);
+    outline-offset: 3px;
+    border-radius: 3px;
+}
+
+/* Suppress outline on mouse click (still visible for keyboard) */
+:focus:not(:focus-visible) {
+    outline: none;
+}
+
+/* Additional contrast for link focus in nav */
+.nav-links a:focus-visible,
+.nav-links button:focus-visible {
+    outline: 3px solid #fff;
+    outline-offset: 3px;
+}
+
+/* 1.4.11 — Non-text contrast: form borders need ≥3:1 against bg */
+input, select, textarea {
+    border-color: #6b7280;  /* contrast ≥3:1 on #1a1f2e bg */
+}
+
+/* 1.4.3 — Muted text meets 4.5:1 minimum (already #64748b ≈4.56:1) */
+/* Darken slightly for safety on light-bg cards */
+.text-muted { color: #5a6473; }
+
+/* Language switcher — clear visual separation */
+.lang-switcher {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+.lang-switcher a { color: var(--crimson-light); text-decoration: underline; }
+.lang-switcher strong { color: var(--text-primary); }
+
+/* 2.4.3 — Ensure chart bars have accessible tooltip via title; bars are decorative */
+.chart-bar, .progress-bar { aria-hidden: true; }
+
+/* 1.3.1 — Table th scope already set in HTML; ensure visible header background */
+table thead th { background-color: var(--bg-dark-3); }
+
+/* 1.4.4 — Text resize: use rem/em not px for font sizes inside articles */
+.card p, .card li { font-size: 0.9375rem; }  /* 15px equiv in rem */
+
+/* 2.5.3 — Label in name: ensure button text is accessible */
+.btn-emergency { font-size: 1.1rem; letter-spacing: 0.01em; }
+
+/* Reduced motion: disable animations for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.001ms !important;
+        transition-duration: 0.001ms !important;
+    }
+}

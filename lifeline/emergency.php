@@ -195,12 +195,14 @@ include 'includes/header.php';
 
             <div class="form-group">
                 <label for="captcha">Verification: what is <?php echo $captchaA; ?> + <?php echo $captchaB; ?>? *</label>
-                <input type="number" id="captcha" name="captcha" required placeholder="Answer" inputmode="numeric" autocomplete="off">
-                <small class="text-secondary">A quick check to keep emergency requests genuine.</small>
+                <input type="number" id="captcha" name="captcha" required aria-required="true"
+                       placeholder="Answer" inputmode="numeric" autocomplete="off"
+                       aria-describedby="captcha-hint">
+                <small id="captcha-hint" class="text-secondary">A quick check to keep emergency requests genuine.</small>
             </div>
 
             <button type="submit" class="btn btn-large w-full btn-emergency">
-                &#9888; <?php echo t('sos.send_btn'); ?>
+                <span aria-hidden="true">&#9888;</span> <?php echo t('sos.send_btn'); ?>
             </button>
         </form>
     </div>

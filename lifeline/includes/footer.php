@@ -1,9 +1,9 @@
 </main>
-<footer>
+<footer role="contentinfo">
     <div class="container">
         <div class="footer-grid">
             <div class="footer-brand">
-                <a href="<?php echo baseUrl(); ?>/index.php" class="logo">&#9764; LifeLine Blood Network</a>
+                <a href="<?php echo baseUrl(); ?>/index.php" class="logo" aria-label="LifeLine Blood Network — home"><span aria-hidden="true">&#9764;</span> LifeLine Blood Network</a>
                 <p>Connecting hospitals with voluntary blood donors to save lives in emergencies. Every donation counts.</p>
             </div>
             <div>

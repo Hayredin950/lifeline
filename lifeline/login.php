@@ -85,15 +85,17 @@ include 'includes/header.php';
 
 <div class="card maxw-480 mx-auto my-40">
     <h1 class="text-center"><?php echo t('auth.login_title'); ?></h1>
-    <form method="POST" action="">
+    <form method="POST" action="" novalidate>
         <input type="hidden" name="csrf_token" value="<?php echo csrfToken(); ?>">
         <div class="form-group">
             <label for="email"><?php echo t('auth.email'); ?></label>
-            <input type="email" id="email" name="email" value="<?php echo old('email'); ?>" required placeholder="you@example.com">
+            <input type="email" id="email" name="email" value="<?php echo old('email'); ?>"
+                   required aria-required="true" autocomplete="email" placeholder="you@example.com">
         </div>
         <div class="form-group">
             <label for="password"><?php echo t('auth.password'); ?></label>
-            <input type="password" id="password" name="password" required placeholder="Enter password">
+            <input type="password" id="password" name="password"
+                   required aria-required="true" autocomplete="current-password" placeholder="Enter password">
         </div>
         <button type="submit" class="btn w-full"><?php echo t('auth.login_btn'); ?></button>
         <p class="text-center mt-16">

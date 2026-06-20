@@ -108,7 +108,7 @@ include 'includes/header.php';
 
 <div class="card">
     <h1><?php echo t('donors.title'); ?></h1>
-    <form method="GET" class="flex flex-wrap gap-16 items-center mt-20">
+    <form method="GET" class="flex flex-wrap gap-16 items-center mt-20" role="search" aria-label="Search for blood donors">
         <div class="form-group flex-1 minw-180 mb-0">
             <label for="blood_type">Blood Type</label>
             <select id="blood_type" name="blood_type">

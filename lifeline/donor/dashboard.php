@@ -102,12 +102,12 @@ include '../includes/header.php';
         <h2>Active Engagements</h2>
         <p class="text-muted fs-90 mb-12">Hospitals you are currently connecting with.</p>
         <div class="table-wrapper">
-            <table>
+            <table aria-label="Your active donation engagements">
                 <thead>
                     <tr>
-                        <th>Hospital</th>
-                        <th>Type</th>
-                        <th>Status</th>
+                        <th scope="col">Hospital</th>
+                        <th scope="col">Type</th>
+                        <th scope="col">Status</th>
                         <th class="hide-mobile">Phone</th>
                         <th>Action</th>
                     </tr>

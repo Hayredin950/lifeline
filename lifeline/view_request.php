@@ -159,18 +159,19 @@ include 'includes/header.php';
 
     <?php if (count($matches) > 0): ?>
         <div class="table-wrapper mt-16">
-        <table>
+        <table aria-label="Compatible donors for this blood request">
+            <caption class="sr-only">List of compatible blood donors interested in this request</caption>
             <thead>
                 <tr>
-                    <th>Donor Name</th>
-                    <th>Blood Type</th>
-                    <th>Location</th>
-                    <th>Last Donation</th>
+                    <th scope="col">Donor Name</th>
+                    <th scope="col">Blood Type</th>
+                    <th scope="col">Location</th>
+                    <th scope="col">Last Donation</th>
                     <?php if (isLoggedIn()): ?>
-                        <th>Phone</th>
-                        <th>Email</th>
+                        <th scope="col">Phone</th>
+                        <th scope="col">Email</th>
                     <?php else: ?>
-                        <th>Contact</th>
+                        <th scope="col">Contact</th>
                     <?php endif; ?>
                 </tr>
             </thead>
