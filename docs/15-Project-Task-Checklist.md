@@ -8,7 +8,7 @@ trust-ready, scalable, billion-dollar platform. Check a box (`[x]`) the moment a
 **Legend:** `[ ]` todo · `[x]` done · `[~]` in progress · 🔴 critical-path blocker · ⭐ stretch (after P3)
 **Owners:** HM=Hayredin · BT=Bemnet · BM=Bethelhem · EM=Euel · LA=Lidiya · FR=Firdows · SEC=Security · MED=Clinical advisor · PO=Product
 
-**Progress:** P0 ✅ · P1 ✅ · P2 ☐ · P3 ☐ · P4 ☐  *(fill ✅ when a phase's boxes are all checked)*
+**Progress:** P0 ✅ · P1 ✅ · P2 ✅ · P3 ☐ · P4 ☐  *(fill ✅ when a phase's boxes are all checked)*
 *Baseline: a functional PHP/MySQL prototype exists with all core flows. The work below makes it safe, stack-compliant, scalable, and sellable.*
 
 ---
