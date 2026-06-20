@@ -1,0 +1,27 @@
+# Environment secrets — never commit real credentials. Only *.example is tracked.
+.env
+lifeline/.env
+**/.env
+!.env.example
+!**/.env.example
+
+# Uploaded user content
+lifeline/uploads/**
+!lifeline/uploads/.gitkeep
+
+# Dependencies / build artifacts
+node_modules/
+vendor/
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# Logs
+*.log
+
+# Deployment artifacts
+.vercel/
