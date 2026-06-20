@@ -127,8 +127,8 @@ include 'includes/header.php';
 
 <div class="sos-hero">
     <div class="sos-pulse">&#9764;</div>
-    <h1>Emergency Blood SOS</h1>
-    <p>For critical, life-threatening blood emergencies. Your request will be sent to all compatible donors in your area immediately.</p>
+    <h1><?php echo t('sos.title'); ?></h1>
+    <p><?php echo t('sos.subtitle'); ?></p>
 </div>
 
 <div class="dashboard-layout">
@@ -200,7 +200,7 @@ include 'includes/header.php';
             </div>
 
             <button type="submit" class="btn btn-large w-full btn-emergency">
-                &#9888; Submit Emergency SOS
+                &#9888; <?php echo t('sos.send_btn'); ?>
             </button>
         </form>
     </div>

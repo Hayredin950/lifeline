@@ -3,7 +3,7 @@ require_once __DIR__ . '/functions.php';
 $flash = getFlash();
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<?php echo htmlspecialchars($_SESSION['locale'] ?? 'en'); ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -60,6 +60,21 @@ $flash = getFlash();
                 <a href="<?php echo baseUrl(); ?>/login.php">Login</a>
                 <a href="<?php echo baseUrl(); ?>/register.php">Register</a>
             <?php endif; ?>
+            <!-- Language switcher -->
+            <span class="lang-switcher fs-85">
+                <?php $curLocale = $_SESSION['locale'] ?? 'en'; ?>
+                <?php if ($curLocale !== 'en'): ?>
+                <a href="<?php echo htmlspecialchars(localeSwitchUrl('en')); ?>" aria-label="Switch to English">EN</a>
+                <?php else: ?>
+                <strong aria-current="true">EN</strong>
+                <?php endif; ?>
+                &nbsp;|&nbsp;
+                <?php if ($curLocale !== 'am'): ?>
+                <a href="<?php echo htmlspecialchars(localeSwitchUrl('am')); ?>" lang="am" aria-label="አማርኛ ቋንቋ ምረጥ">አማ</a>
+                <?php else: ?>
+                <strong lang="am" aria-current="true">አማ</strong>
+                <?php endif; ?>
+            </span>
         </nav>
     </div>
 </header>

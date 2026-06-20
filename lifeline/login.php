@@ -84,22 +84,22 @@ include 'includes/header.php';
 ?>
 
 <div class="card maxw-480 mx-auto my-40">
-    <h1 class="text-center">Login</h1>
+    <h1 class="text-center"><?php echo t('auth.login_title'); ?></h1>
     <form method="POST" action="">
         <input type="hidden" name="csrf_token" value="<?php echo csrfToken(); ?>">
         <div class="form-group">
-            <label for="email">Email Address</label>
+            <label for="email"><?php echo t('auth.email'); ?></label>
             <input type="email" id="email" name="email" value="<?php echo old('email'); ?>" required placeholder="you@example.com">
         </div>
         <div class="form-group">
-            <label for="password">Password</label>
+            <label for="password"><?php echo t('auth.password'); ?></label>
             <input type="password" id="password" name="password" required placeholder="Enter password">
         </div>
-        <button type="submit" class="btn w-full">Login</button>
+        <button type="submit" class="btn w-full"><?php echo t('auth.login_btn'); ?></button>
         <p class="text-center mt-16">
-            <a href="<?php echo baseUrl(); ?>/forgot_password.php">Forgot password?</a>
+            <a href="<?php echo baseUrl(); ?>/forgot_password.php"><?php echo t('auth.forgot_password'); ?></a>
         </p>
-        <p class="text-center">Don't have an account? <a href="<?php echo baseUrl(); ?>/register.php">Register</a></p>
+        <p class="text-center"><?php echo t('auth.no_account'); ?> <a href="<?php echo baseUrl(); ?>/register.php"><?php echo t('auth.register_btn'); ?></a></p>
     </form>
 </div>
 

@@ -152,24 +152,24 @@ include 'includes/header.php';
 
 <?php if (!in_array($role, ['donor', 'hospital'])): ?>
 <div class="card maxw-600 mx-auto my-40">
-    <h1 class="text-center">Register</h1>
+    <h1 class="text-center"><?php echo t('auth.register_title'); ?></h1>
     <p class="text-center">Choose your account type to get started.</p>
     <div class="grid-2 mt-20">
         <a href="<?php echo baseUrl(); ?>/register.php?role=donor" class="card text-center no-underline text-inherit">
-            <h2>Donor</h2>
+            <h2><?php echo t('register.role_donor'); ?></h2>
             <p>Register as a voluntary blood donor and help save lives in your community.</p>
-            <span class="btn">Register as Donor</span>
+            <span class="btn"><?php echo t('register.submit'); ?></span>
         </a>
         <a href="<?php echo baseUrl(); ?>/register.php?role=hospital" class="card text-center no-underline text-inherit">
-            <h2>Hospital</h2>
+            <h2><?php echo t('register.role_hospital'); ?></h2>
             <p>Register your hospital to create emergency blood requests and find donors.</p>
-            <span class="btn">Register as Hospital</span>
+            <span class="btn"><?php echo t('register.submit'); ?></span>
         </a>
     </div>
 </div>
 <?php else: ?>
 <div class="card maxw-600 mx-auto my-40">
-    <h1 class="text-center">Register as <?php echo ucfirst($role); ?></h1>
+    <h1 class="text-center"><?php echo t('auth.register_title'); ?></h1>
     <form method="POST" action="">
         <input type="hidden" name="csrf_token" value="<?php echo csrfToken(); ?>">
         <input type="hidden" name="role" value="<?php echo htmlspecialchars($role); ?>">
@@ -272,14 +272,11 @@ include 'includes/header.php';
             <label class="flex items-center gap-10">
                 <input type="checkbox" name="consent_terms" value="1" required
                        <?php echo isset($_POST['consent_terms']) ? 'checked' : ''; ?>>
-                <span>
-                    I agree to the <strong>Terms of Service</strong> and <strong>Privacy Policy</strong>
-                    <span class="fs-80 text-muted">(v<?php echo TERMS_VERSION; ?>)</span>
-                </span>
+                <span><?php echo t('register.consent', ['version' => TERMS_VERSION]); ?></span>
             </label>
         </div>
 
-        <button type="submit" class="btn w-full">Create Account</button>
+        <button type="submit" class="btn w-full"><?php echo t('register.submit'); ?></button>
         <p class="text-center mt-16"><a href="<?php echo baseUrl(); ?>/register.php">&larr; Back to selection</a></p>
     </form>
 </div>

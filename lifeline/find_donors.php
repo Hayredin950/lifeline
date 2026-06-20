@@ -107,7 +107,7 @@ include 'includes/header.php';
 ?>
 
 <div class="card">
-    <h1>Find Blood Donors</h1>
+    <h1><?php echo t('donors.title'); ?></h1>
     <form method="GET" class="flex flex-wrap gap-16 items-center mt-20">
         <div class="form-group flex-1 minw-180 mb-0">
             <label for="blood_type">Blood Type</label>
@@ -142,7 +142,7 @@ include 'includes/header.php';
         </div>
         <div class="form-group flex-05 minw-120 mb-0 pt-25">
             <input type="hidden" name="search" value="1">
-            <button type="submit" class="btn btn-primary w-full">Search</button>
+            <button type="submit" class="btn btn-primary w-full"><?php echo t('donors.search_btn'); ?></button>
         </div>
     </form>
 </div>
@@ -223,7 +223,7 @@ include 'includes/header.php';
             <p class="mt-16 fs-90 text-muted"><em>Login to view donor contact details.</em></p>
         <?php endif; ?>
     <?php else: ?>
-        <p>No donors found matching your criteria.</p>
+        <p><?php echo t('donors.no_results'); ?></p>
     <?php endif; ?>
 </div>
 <?php endif; ?>

@@ -1,6 +1,56 @@
 <?php
 require_once __DIR__ . '/db.php';
 
+// ── i18n helpers ─────────────────────────────────────────────────────────────
+
+/**
+ * Translate a dot-notation key, interpolating {placeholder} tokens.
+ * Falls back to English, then to the key itself.
+ *
+ * @param string $key      e.g. 'nav.login'
+ * @param array  $replace  e.g. ['name' => 'Alice', 'count' => 3]
+ */
+function t(string $key, array $replace = []): string
+{
+    static $strings = null;
+    if ($strings === null) {
+        $locale  = $_SESSION['locale'] ?? 'en';
+        $allowed = ['en', 'am'];
+        if (!in_array($locale, $allowed, true)) $locale = 'en';
+
+        $langFile = __DIR__ . '/../lang/' . $locale . '.php';
+        $strings  = file_exists($langFile) ? require $langFile : [];
+
+        // Fall-back layer: merge English under locale strings.
+        if ($locale !== 'en') {
+            $enFile  = __DIR__ . '/../lang/en.php';
+            $strings = $strings + (file_exists($enFile) ? require $enFile : []);
+        }
+    }
+
+    $text = $strings[$key] ?? $key;
+
+    foreach ($replace as $placeholder => $value) {
+        $text = str_replace('{' . $placeholder . '}', (string)$value, $text);
+    }
+
+    return htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
+}
+
+/** Set the active locale and persist it in the session. */
+function setAppLocale(string $locale): void
+{
+    $allowed = ['en', 'am'];
+    $_SESSION['locale'] = in_array($locale, $allowed, true) ? $locale : 'en';
+}
+
+/** Returns a language switcher URL for the given locale. */
+function localeSwitchUrl(string $locale): string
+{
+    return baseUrl() . '/set_locale.php?locale=' . urlencode($locale)
+        . '&redirect=' . urlencode($_SERVER['REQUEST_URI'] ?? '/');
+}
+
 // Rate limiting for login attempts.
 // DB-backed (DEF-12): the legacy implementation tracked attempts in $_SESSION, so an
 // attacker who dropped the session cookie reset the counter and bypassed lockout
