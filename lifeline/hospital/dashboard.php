@@ -118,6 +118,9 @@ include '../includes/header.php';
                 <a href="<?php echo baseUrl(); ?>/auth/setup_2fa.php" class="btn btn-small btn-secondary w-full text-center">
                     <?php echo $totpEnabled ? '2FA Active' : 'Enable 2FA'; ?>
                 </a>
+                <a href="<?php echo baseUrl(); ?>/hospital/submit_verification.php" class="btn btn-small btn-secondary w-full text-center">
+                    Hospital Verification
+                </a>
             </div>
         </div>
     </div>

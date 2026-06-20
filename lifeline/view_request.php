@@ -8,7 +8,8 @@ if (!$requestId) {
 }
 
 $stmt = $pdo->prepare("
-    SELECT br.*, hp.hospital_name, hp.phone as hospital_phone, hp.city as h_city, hp.state as h_state
+    SELECT br.*, hp.hospital_name, hp.phone as hospital_phone, hp.city as h_city, hp.state as h_state,
+           hp.is_verified
     FROM blood_requests br
     LEFT JOIN hospital_profiles hp ON br.hospital_id = hp.user_id
     WHERE br.id = ?
@@ -88,7 +89,17 @@ include 'includes/header.php';
     <div class="card-header">
         <div>
             <h1>Blood Request #<?php echo $requestId; ?></h1>
-            <p class="m-0 text-muted">Posted by <?php echo $request['hospital_name'] ? htmlspecialchars($request['hospital_name']) : '<span class="text-crimson fw-600">Emergency SOS</span>'; ?> &middot; <?php echo date('M d, Y', strtotime($request['created_at'])); ?></p>
+            <p class="m-0 text-muted">Posted by
+                <?php if ($request['hospital_name']): ?>
+                    <?php echo htmlspecialchars($request['hospital_name']); ?>
+                    <?php if ($request['is_verified']): ?>
+                        <span class="badge badge-success fs-75" title="Verified hospital">&#10003; Verified</span>
+                    <?php endif; ?>
+                <?php else: ?>
+                    <span class="text-crimson fw-600">Emergency SOS</span>
+                <?php endif; ?>
+                &middot; <?php echo date('M d, Y', strtotime($request['created_at'])); ?>
+            </p>
         </div>
         <div class="flex gap-12 items-center">
             <?php $urgencyPill = $request['urgency'] === 'critical' ? 'pill--danger' : ($request['urgency'] === 'urgent' ? 'pill--warning' : 'pill--info'); ?>
