@@ -95,6 +95,11 @@ include '../includes/header.php';
         <p>De-identified public-health shortage heatmap, fulfillment rates, and time-to-fill by region.</p>
         <span class="btn mt-10">Open</span>
     </a>
+    <a href="<?php echo baseUrl(); ?>/admin/country_config.php" class="card no-underline text-inherit">
+        <h2>Country Configuration</h2>
+        <p>Manage active countries, per-country GDPR/HIPAA flags, cooloff days, and locale defaults.</p>
+        <span class="btn mt-10">Open</span>
+    </a>
 </div>
 
 <?php include '../includes/footer.php'; ?>

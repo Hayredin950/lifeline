@@ -114,7 +114,7 @@ trust-ready, scalable, billion-dollar platform. Check a box (`[x]`) the moment a
 ## Phase 4 — Global & adjacencies (P4) ⭐
 *Exit: multi-country; new verticals on the same rails.*
 
-- [ ] ⭐ Multi-country rollout (per-country region cells, localized compliance) — Platform/PO
+- [x] ⭐ Multi-country rollout (per-country region cells, localized compliance) — Platform/PO *(`schema/015_country_config.sql` — 11 countries seeded with cooloff/GDPR/HIPAA flags; `region.php` extended: COUNTRY_REGISTRY, getCountryIso(), getCountryConfig() DB-backed with static fallback, isGdprCountry()/isHipaaCountry()/countryDonationCooloff() helpers, X-Country header; `admin/country_config.php` enable/disable + per-country compliance config; COUNTRY_ISO2 env var selects active country)*
 - [ ] ⭐ Plasma / platelet / bone-marrow / organ-donor registries on the matching engine — EM/MED
 - [ ] ⭐ Inter-facility cold-chain transfer matching + tracking — BT
 - [ ] ⭐ Consented clinical-trial / rare-blood recruitment — PO/SEC/MED

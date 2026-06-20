@@ -1,26 +1,93 @@
 <?php
 /**
- * LifeLine — Region-cell app-layer routing (P3 · Doc 12 Tier 4)
+ * LifeLine — Multi-country region-cell routing (P4.1 · Doc 12 Tier 4)
  *
- * Supports a locality-sharded deployment where each region cell (e.g. et-central,
- * et-north, et-south) runs its own MySQL stack. The app reads REGION_ID from .env
- * and routes writes to the local DB and reads to regional replicas.
+ * P3: Ethiopian health-zone sharding (et-central … et-west).
+ * P4: Extended to multi-country — each country is a top-level routing domain;
+ *     each country's regions are its locality cells. Per-country compliance
+ *     flags (GDPR/HIPAA/cooloff) are loaded from the country_config DB table.
  *
- * At Tier 0–3 (single DB) nothing changes — REGION_ID defaults to "et-central"
- * and getRegionalPdo() returns the global $pdo. The routing layer activates when
- * REGION_DB_HOST_{REGION_ID} is set in .env, enabling zero-code-change shard cutover.
+ * COUNTRY_ISO2 env var selects the active country (default: ET).
+ * REGION_ID env var selects the locality cell within that country.
  *
- * Defined regions (Ethiopian health zones):
- *   et-central  — Addis Ababa, Dire Dawa
- *   et-north    — Amhara, Tigray, Afar
- *   et-south    — SNNP, Sidama, Oromia (south)
- *   et-east     — Somali, Harari
- *   et-west     — Oromia (west), Gambella, Benishangul-Gumuz
+ * At Tier 0–3 (single DB) nothing changes — both default to ET / et-central.
+ * Tier-4 multi-country: set COUNTRY_ISO2 + REGION_DB_HOST_{REGION_ID} per cell.
  */
 
 if (!defined('APP_ROOT')) {
     define('APP_ROOT', dirname(__DIR__));
 }
+
+// ── Country registry (static fallback — authoritative data is in country_config table) ─
+const COUNTRY_REGISTRY = [
+    'ET' => ['name' => 'Ethiopia',       'locale' => 'am', 'gdpr' => false, 'hipaa' => false, 'cooloff_days' => 56],
+    'KE' => ['name' => 'Kenya',          'locale' => 'en', 'gdpr' => false, 'hipaa' => false, 'cooloff_days' => 56],
+    'NG' => ['name' => 'Nigeria',        'locale' => 'en', 'gdpr' => false, 'hipaa' => false, 'cooloff_days' => 56],
+    'GH' => ['name' => 'Ghana',          'locale' => 'en', 'gdpr' => false, 'hipaa' => false, 'cooloff_days' => 56],
+    'TZ' => ['name' => 'Tanzania',       'locale' => 'en', 'gdpr' => false, 'hipaa' => false, 'cooloff_days' => 56],
+    'UG' => ['name' => 'Uganda',         'locale' => 'en', 'gdpr' => false, 'hipaa' => false, 'cooloff_days' => 56],
+    'SD' => ['name' => 'Sudan',          'locale' => 'en', 'gdpr' => false, 'hipaa' => false, 'cooloff_days' => 56],
+    'RW' => ['name' => 'Rwanda',         'locale' => 'en', 'gdpr' => false, 'hipaa' => false, 'cooloff_days' => 56],
+    'US' => ['name' => 'United States',  'locale' => 'en', 'gdpr' => false, 'hipaa' => true,  'cooloff_days' => 56],
+    'GB' => ['name' => 'United Kingdom', 'locale' => 'en', 'gdpr' => true,  'hipaa' => false, 'cooloff_days' => 84],
+    'DE' => ['name' => 'Germany',        'locale' => 'en', 'gdpr' => true,  'hipaa' => false, 'cooloff_days' => 56],
+];
+
+/**
+ * Return the active country ISO-2 code from env (e.g. "ET", "KE").
+ */
+function getCountryIso(): string
+{
+    static $iso = null;
+    if ($iso !== null) return $iso;
+    $configured = strtoupper(trim(Config::get('COUNTRY_ISO2', 'ET')));
+    $iso = isset(COUNTRY_REGISTRY[$configured]) ? $configured : 'ET';
+    return $iso;
+}
+
+/**
+ * Return the per-country compliance config.
+ * Tries DB first (country_config table), falls back to COUNTRY_REGISTRY.
+ */
+function getCountryConfig(): array
+{
+    global $pdo;
+    static $cache = null;
+    if ($cache !== null) return $cache;
+
+    $iso = getCountryIso();
+    try {
+        $stmt = $pdo->prepare("SELECT * FROM country_config WHERE iso2 = ? AND is_active = 1 LIMIT 1");
+        $stmt->execute([$iso]);
+        $row = $stmt->fetch();
+        if ($row) {
+            $cache = [
+                'iso2'          => $row['iso2'],
+                'name'          => $row['name'],
+                'locale'        => $row['default_locale'],
+                'gdpr'          => (bool)$row['gdpr_mode'],
+                'hipaa'         => (bool)$row['hipaa_mode'],
+                'cooloff_days'  => (int)$row['donation_cooloff_days'],
+                'currency'      => $row['currency'],
+            ];
+            return $cache;
+        }
+    } catch (\Throwable $e) {
+        // DB not ready — use static fallback.
+    }
+
+    $cache = COUNTRY_REGISTRY[$iso] ?? COUNTRY_REGISTRY['ET'];
+    $cache['iso2']     = $iso;
+    $cache['currency'] = 'USD';
+    return $cache;
+}
+
+/**
+ * Convenience: is GDPR-style processing required for this country?
+ */
+function isGdprCountry(): bool { return getCountryConfig()['gdpr']; }
+function isHipaaCountry(): bool { return getCountryConfig()['hipaa']; }
+function countryDonationCooloff(): int { return getCountryConfig()['cooloff_days']; }
 
 // ── Region registry ──────────────────────────────────────────────────────────
 const REGION_REGISTRY = [
@@ -140,5 +207,6 @@ function emitRegionHeader(): void {
     if (!headers_sent()) {
         header('X-Region: ' . getRegionId());
         header('X-Region-Label: ' . getRegion()['label']);
+        header('X-Country: ' . getCountryIso());
     }
 }
