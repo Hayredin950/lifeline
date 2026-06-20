@@ -65,8 +65,8 @@ include '../includes/header.php';
             </div>
             <div class="form-group">
                 <label>Scopes (comma-separated)</label>
-                <input type="text" name="scopes" value="*" placeholder="donors:read, requests:read">
-                <small class="field-hint">* = all scopes</small>
+                <input type="text" name="scopes" value="*" placeholder="donors:read, requests:read, fhir, analytics">
+                <small class="field-hint">* = all scopes. Available: donors, requests, hospitals, blood_banks, fhir, analytics</small>
             </div>
             <div class="form-group">
                 <label>Rate limit (req/min)</label>

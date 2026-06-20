@@ -11,6 +11,7 @@
  */
 
 require_once 'includes/config.php';
+require_once 'includes/region.php';
 
 // Session is file-based and does not require the DB, so we can detect an admin
 // operator even when the database is down.
@@ -59,10 +60,15 @@ if (!$deep) {
 }
 
 // --- Deep (authorized) response ---
+$region = getRegion();
 echo json_encode([
     'status'    => $dbOk ? 'healthy' : 'unhealthy',
     'timestamp' => date('c'),
     'version'   => '1.0.0',
+    'region'    => [
+        'id'    => getRegionId(),
+        'label' => $region['label'],
+    ],
     'checks'    => [
         'database'    => $dbOk ? 'ok' : ('error: ' . $dbError),
         'email'       => Config::isEmailConfigured() ? 'configured' : 'not_configured',

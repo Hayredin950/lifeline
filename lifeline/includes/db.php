@@ -5,6 +5,15 @@
  */
 
 require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/security.php';
+require_once __DIR__ . '/region.php';
+
+// Security + region headers sent before any output or session_start.
+// Skipped in CLI (worker) context where headers are meaningless.
+if (PHP_SAPI !== 'cli') {
+    sendSecurityHeaders();
+    emitRegionHeader();
+}
 
 // Get database configuration from environment
 $dbConfig = Config::getDatabaseConfig();

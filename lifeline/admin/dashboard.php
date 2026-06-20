@@ -85,6 +85,16 @@ include '../includes/header.php';
         <p>Enable or manage TOTP 2FA for your admin account.</p>
         <span class="btn mt-10">Manage 2FA</span>
     </a>
+    <a href="<?php echo baseUrl(); ?>/admin/dpo_dashboard.php" class="card no-underline text-inherit">
+        <h2>DPO Compliance</h2>
+        <p>DSAR queue, breach incidents, BAA agreements, DPIA register &mdash; DPDP/HIPAA-style program.</p>
+        <span class="btn mt-10">Open</span>
+    </a>
+    <a href="<?php echo baseUrl(); ?>/admin/shortage_analytics.php" class="card no-underline text-inherit">
+        <h2>Shortage Analytics</h2>
+        <p>De-identified public-health shortage heatmap, fulfillment rates, and time-to-fill by region.</p>
+        <span class="btn mt-10">Open</span>
+    </a>
 </div>
 
 <?php include '../includes/footer.php'; ?>
