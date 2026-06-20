@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS `donor_profiles` (
   `address`            TEXT,
   `city`               VARCHAR(100) DEFAULT NULL,
   `state`              VARCHAR(100) DEFAULT NULL,
-  `country`            VARCHAR(100) DEFAULT 'India',
+  `country`            VARCHAR(100) DEFAULT 'Ethiopia',
   `date_of_birth`      DATE DEFAULT NULL,
   `gender`             VARCHAR(10) DEFAULT NULL,
   `profile_pic`        VARCHAR(255) DEFAULT NULL,            -- uploaded avatar filename (FR-16)
@@ -92,7 +92,7 @@ CREATE TABLE IF NOT EXISTS `hospital_profiles` (
   `address`        TEXT,
   `city`           VARCHAR(100) DEFAULT NULL,
   `state`          VARCHAR(100) DEFAULT NULL,
-  `country`        VARCHAR(100) DEFAULT 'India',
+  `country`        VARCHAR(100) DEFAULT 'Ethiopia',
   `license_number` VARCHAR(100) DEFAULT NULL,
   `latitude`       DECIMAL(10,7) DEFAULT NULL,
   `longitude`      DECIMAL(10,7) DEFAULT NULL,
@@ -310,21 +310,21 @@ CREATE TABLE IF NOT EXISTS `notifications` (
 INSERT INTO `blood_banks`
   (`id`,`name`,`address`,`city`,`state`,`phone`,`email`,`license_number`,`working_hours`,`has_24h_service`,`latitude`,`longitude`,`created_at`)
 VALUES
-  (1,'AIIMS Blood Bank','Ansari Nagar East, New Delhi','New Delhi','Delhi','011-26588500',NULL,NULL,'24 Hours',1,NULL,NULL,CURRENT_TIMESTAMP),
-  (2,'Rotary Blood Bank','Connaught Place','New Delhi','Delhi','011-23366243',NULL,NULL,'8am-8pm',0,NULL,NULL,CURRENT_TIMESTAMP),
-  (3,'KEM Hospital Blood Bank','Acharya Donde Marg, Parel','Mumbai','Maharashtra','022-24107000',NULL,NULL,'24 Hours',1,NULL,NULL,CURRENT_TIMESTAMP),
-  (4,'Lilavati Hospital Blood Bank','Bandra Reclamation','Mumbai','Maharashtra','022-26751000',NULL,NULL,'24 Hours',1,NULL,NULL,CURRENT_TIMESTAMP),
-  (5,'Apollo Hospital Blood Bank','Greams Road','Chennai','Tamil Nadu','044-28293333',NULL,NULL,'24 Hours',1,NULL,NULL,CURRENT_TIMESTAMP),
-  (6,'Nimhans Blood Bank','Hosur Road, Bangalore','Bangalore','Karnataka','080-46110007',NULL,NULL,'8am-6pm',0,NULL,NULL,CURRENT_TIMESTAMP),
-  (7,'PGI Blood Bank','Sector 12, Chandigarh','Chandigarh','Punjab','0172-2756565',NULL,NULL,'24 Hours',1,NULL,NULL,CURRENT_TIMESTAMP),
-  (8,'SGPGI Blood Bank','Raebareli Road','Lucknow','Uttar Pradesh','0522-2494404',NULL,NULL,'24 Hours',1,NULL,NULL,CURRENT_TIMESTAMP)
+  (1,'Ethiopian Red Cross Society Blood Bank','Ras Desta Damtew Street, Addis Ababa','Addis Ababa','Addis Ababa','+251 11 551 5166',NULL,NULL,'24 Hours',1,NULL,NULL,CURRENT_TIMESTAMP),
+  (2,'Tikur Anbessa (Black Lion) Hospital Blood Bank','Siddist Kilo, Addis Ababa','Addis Ababa','Addis Ababa','+251 11 551 4016',NULL,NULL,'24 Hours',1,NULL,NULL,CURRENT_TIMESTAMP),
+  (3,'Yekatit 12 Hospital Blood Bank','Piassa, Addis Ababa','Addis Ababa','Addis Ababa','+251 11 155 3800',NULL,NULL,'24 Hours',1,NULL,NULL,CURRENT_TIMESTAMP),
+  (4,'St. Paul''s Hospital Millennium Medical College Blood Bank','Gulele, Addis Ababa','Addis Ababa','Addis Ababa','+251 11 276 5298',NULL,NULL,'24 Hours',1,NULL,NULL,CURRENT_TIMESTAMP),
+  (5,'Bahir Dar University Teaching Hospital Blood Bank','Bahir Dar, Amhara','Bahir Dar','Amhara','+251 58 220 7230',NULL,NULL,'8am-6pm',0,NULL,NULL,CURRENT_TIMESTAMP),
+  (6,'Mekelle University Hospital Blood Bank','Mekelle, Tigray','Mekelle','Tigray','+251 34 441 6680',NULL,NULL,'8am-6pm',0,NULL,NULL,CURRENT_TIMESTAMP),
+  (7,'Hawassa University Comprehensive Specialized Hospital Blood Bank','Hawassa, SNNP','Hawassa','SNNP','+251 46 220 9038',NULL,NULL,'8am-6pm',0,NULL,NULL,CURRENT_TIMESTAMP),
+  (8,'Jimma University Medical Centre Blood Bank','Jimma, Oromia','Jimma','Oromia','+251 47 111 4100',NULL,NULL,'8am-6pm',0,NULL,NULL,CURRENT_TIMESTAMP)
 ON DUPLICATE KEY UPDATE `name` = VALUES(`name`);
 
 INSERT INTO `testimonials` (`id`,`donor_id`,`recipient_name`,`story`,`rating`,`is_approved`,`created_at`)
 VALUES
-  (1,NULL,'Ravi Kumar''s Family','My father needed O- blood urgently after his accident. Within 2 hours, LifeLine matched us with a donor in our city. He survived because of this platform. Forever grateful.',5,1,CURRENT_TIMESTAMP),
-  (2,NULL,'Dr. Priya Sharma','As a hospital administrator, LifeLine has transformed how we handle emergency blood needs. The matching system is incredibly fast and reliable.',5,1,CURRENT_TIMESTAMP),
-  (3,NULL,'Meera Singh','I donated blood for the first time through LifeLine. The process was so simple and knowing I helped save a life is the best feeling in the world.',5,1,CURRENT_TIMESTAMP)
+  (1,NULL,'Abebe Girma''s Family','My father needed O- blood urgently after his accident. Within 2 hours, LifeLine matched us with a donor in Addis Ababa. He survived because of this platform. Forever grateful.',5,1,CURRENT_TIMESTAMP),
+  (2,NULL,'Dr. Tigist Haile','As a hospital administrator at Tikur Anbessa Hospital, LifeLine has transformed how we handle emergency blood needs. The matching system is incredibly fast and reliable.',5,1,CURRENT_TIMESTAMP),
+  (3,NULL,'Meron Tadesse','I donated blood for the first time through LifeLine. The process was so simple and knowing I helped save a life is the best feeling in the world.',5,1,CURRENT_TIMESTAMP)
 ON DUPLICATE KEY UPDATE `story` = VALUES(`story`);
 
 -- Record this migration

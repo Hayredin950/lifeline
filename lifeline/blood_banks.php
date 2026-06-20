@@ -41,11 +41,11 @@ include 'includes/header.php';
         </div>
         <div class="form-group flex-1 minw-180 mb-0">
             <label for="city">City</label>
-            <input type="text" id="city" name="city" value="<?php echo htmlspecialchars($city); ?>" placeholder="e.g. Mumbai">
+            <input type="text" id="city" name="city" value="<?php echo htmlspecialchars($city); ?>" placeholder="e.g. Addis Ababa">
         </div>
         <div class="form-group flex-1 minw-180 mb-0">
             <label for="state">State</label>
-            <input type="text" id="state" name="state" value="<?php echo htmlspecialchars($state); ?>" placeholder="e.g. Maharashtra">
+            <input type="text" id="state" name="state" value="<?php echo htmlspecialchars($state); ?>" placeholder="e.g. Oromia">
         </div>
         <div class="mt-24">
             <button type="submit" class="btn">Search</button>

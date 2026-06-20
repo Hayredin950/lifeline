@@ -169,7 +169,7 @@ include 'includes/header.php';
                 <td>
                     <div class="flex items-center gap-12">
                         <div class="avatar-initials-sm">
-                            <?php echo strtoupper(substr($d['full_name'], 0, 1)); ?>
+                            <?php echo htmlspecialchars(strtoupper(mb_substr($d['full_name'], 0, 1)), ENT_QUOTES, 'UTF-8'); ?>
                         </div>
                         <div class="min-w-0">
                             <div class="fw-600 text-primary fs-90 ellipsis maxw-120"><?php echo htmlspecialchars($d['full_name']); ?></div>

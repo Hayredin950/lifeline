@@ -17,9 +17,9 @@ $hasSearch = isset($_GET['search']) || ($bloodType || $city || $state);
 if ($_SERVER['REQUEST_METHOD'] === 'GET' && $hasSearch) {
     // Try to geocode the search location for distance ranking (FR-20).
     // Falls back to city-string filter when Nominatim is unreachable.
-    $searchCountry = trim($_GET['country'] ?? 'India');
+    $searchCountry = trim($_GET['country'] ?? 'Ethiopia');
     if ($city !== '' || $state !== '') {
-        $coords = geocodeLocation($city, $state, $searchCountry ?: 'India');
+        $coords = geocodeLocation($city, $state, $searchCountry ?: 'Ethiopia');
         if ($coords) {
             $searchLat = $coords['latitude'];
             $searchLng = $coords['longitude'];
@@ -119,11 +119,11 @@ include 'includes/header.php';
         </div>
         <div class="form-group flex-1 minw-180 mb-0">
             <label for="city">City</label>
-            <input type="text" id="city" name="city" value="<?php echo htmlspecialchars($city); ?>" placeholder="e.g. Mumbai">
+            <input type="text" id="city" name="city" value="<?php echo htmlspecialchars($city); ?>" placeholder="e.g. Addis Ababa">
         </div>
         <div class="form-group flex-1 minw-180 mb-0">
             <label for="state">State</label>
-            <input type="text" id="state" name="state" value="<?php echo htmlspecialchars($state); ?>" placeholder="e.g. Maharashtra">
+            <input type="text" id="state" name="state" value="<?php echo htmlspecialchars($state); ?>" placeholder="e.g. Oromia">
         </div>
         <div class="form-group flex-1 minw-120 mb-0">
             <label for="radius">Radius (km)</label>

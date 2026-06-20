@@ -146,7 +146,7 @@ include 'includes/header.php';
                 </div>
                 <div class="form-group">
                     <label for="phone">Phone Number *</label>
-                    <input type="tel" id="phone" name="phone" value="<?php echo old('phone'); ?>" required placeholder="+91-XXXXX-XXXXX">
+                    <input type="tel" id="phone" name="phone" value="<?php echo old('phone'); ?>" required placeholder="+251-9X-XXX-XXXX">
                 </div>
             </div>
 
@@ -169,17 +169,17 @@ include 'includes/header.php';
             <div class="grid-2">
                 <div class="form-group">
                     <label for="city">City *</label>
-                    <input type="text" id="city" name="city" value="<?php echo old('city'); ?>" required placeholder="e.g. Mumbai">
+                    <input type="text" id="city" name="city" value="<?php echo old('city'); ?>" required placeholder="e.g. Addis Ababa">
                 </div>
                 <div class="form-group">
                     <label for="state">State *</label>
-                    <input type="text" id="state" name="state" value="<?php echo old('state'); ?>" required placeholder="e.g. Maharashtra">
+                    <input type="text" id="state" name="state" value="<?php echo old('state'); ?>" required placeholder="e.g. Oromia">
                 </div>
             </div>
 
             <div class="form-group">
                 <label for="hospital">Hospital Name (If admitted)</label>
-                <input type="text" id="hospital" name="hospital" value="<?php echo old('hospital'); ?>" placeholder="e.g. Apollo Hospital">
+                <input type="text" id="hospital" name="hospital" value="<?php echo old('hospital'); ?>" placeholder="e.g. Black Lion Hospital">
             </div>
 
             <div class="form-group">
@@ -219,10 +219,10 @@ include 'includes/header.php';
         <div class="card border-l-success">
             <h3 class="text-success">&#128222; Emergency Hotlines</h3>
             <div class="mt-8">
-                <p class="fs-90"><strong>Indian Red Cross:</strong> 1800-11-4488</p>
-                <p class="fs-90"><strong>Blood Helpline:</strong> 104</p>
-                <p class="fs-90"><strong>Emergency:</strong> 112</p>
-                <p class="fs-90"><strong>Ambulance:</strong> 108</p>
+                <p class="fs-90"><strong>Ethiopian Red Cross:</strong> +251 11 551 5166</p>
+                <p class="fs-90"><strong>Blood Bank (NABC):</strong> +251 11 667 7281</p>
+                <p class="fs-90"><strong>Emergency:</strong> 911</p>
+                <p class="fs-90"><strong>Ambulance:</strong> 907</p>
             </div>
         </div>
 

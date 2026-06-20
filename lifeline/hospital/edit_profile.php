@@ -39,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         trim($_POST['address'] ?? ''),
         trim($_POST['city'] ?? ''),
         trim($_POST['state'] ?? ''),
-        trim($_POST['country'] ?? 'India'),
+        trim($_POST['country'] ?? 'Ethiopia'),
         trim($_POST['license_number'] ?? ''),
         $lat,
         $lng,
@@ -160,7 +160,7 @@ include '../includes/header.php';
         <div class="form-group">
             <label for="country">Country</label>
             <input type="text" id="country" name="country" 
-                   value="<?php echo htmlspecialchars($profile['country'] ?? 'India'); ?>">
+                   value="<?php echo htmlspecialchars($profile['country'] ?? 'Ethiopia'); ?>">
         </div>
         
         <h3 class="form-section-title mt-30">Change Password (Optional)</h3>

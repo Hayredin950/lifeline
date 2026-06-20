@@ -83,7 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             trim($_POST['address'] ?? ''),
             trim($_POST['city'] ?? ''),
             trim($_POST['state'] ?? ''),
-            trim($_POST['country'] ?? 'India'),
+            trim($_POST['country'] ?? 'Ethiopia'),
             $_POST['date_of_birth'] ?: null,
             $_POST['gender'] ?? null,
             isset($_POST['is_available']) ? 1 : 0,
@@ -135,7 +135,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             trim($_POST['address'] ?? ''),
             trim($_POST['city'] ?? ''),
             trim($_POST['state'] ?? ''),
-            trim($_POST['country'] ?? 'India'),
+            trim($_POST['country'] ?? 'Ethiopia'),
             trim($_POST['license_number'] ?? ''),
             $lat,
             $lng,
@@ -235,7 +235,7 @@ include '../includes/header.php';
         </div>
         <div class="form-group">
             <label>Country</label>
-            <input type="text" name="country" value="<?php echo htmlspecialchars($record['country'] ?? 'India'); ?>">
+            <input type="text" name="country" value="<?php echo htmlspecialchars($record['country'] ?? 'Ethiopia'); ?>">
         </div>
         <div class="form-group">
             <label><input type="checkbox" name="is_active" value="1" <?php echo $record['is_active'] ? 'checked' : ''; ?>> Account Active</label>
@@ -275,7 +275,7 @@ include '../includes/header.php';
         </div>
         <div class="form-group">
             <label>Country</label>
-            <input type="text" name="country" value="<?php echo htmlspecialchars($record['country'] ?? 'India'); ?>">
+            <input type="text" name="country" value="<?php echo htmlspecialchars($record['country'] ?? 'Ethiopia'); ?>">
         </div>
         <div class="form-group">
             <label><input type="checkbox" name="is_active" value="1" <?php echo $record['is_active'] ? 'checked' : ''; ?>> Account Active</label>

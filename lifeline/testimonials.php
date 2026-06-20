@@ -71,7 +71,7 @@ include 'includes/header.php';
 
 <div class="stories-hero">
     <h1>&#10084; Stories That Saved Lives</h1>
-    <p>Real people, real impact. Read how LifeLine connects donors and hospitals across India every day.</p>
+    <p>Real people, real impact. Read how LifeLine connects donors and hospitals across Ethiopia every day.</p>
 </div>
 
 <?php if (empty($testimonials)): ?>

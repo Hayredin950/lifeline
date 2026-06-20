@@ -54,7 +54,7 @@ include 'includes/header.php';
     <div class="hero-bg"></div>
     <div class="hero-content">
         <h1>Every Drop Counts.<br>Save a <span class="highlight">Life Today</span>.</h1>
-        <p>Connecting hospitals with voluntary blood donors across India. Find compatible donors, create urgent requests, and save lives in emergencies using our advanced AI-powered matching system.</p>
+        <p>Connecting hospitals with voluntary blood donors across Ethiopia. Find compatible donors, create urgent requests, and save lives in emergencies using our advanced AI-powered matching system.</p>
         <div class="hero-actions">
             <a href="<?php echo baseUrl(); ?>/find_donors.php" class="btn btn-large">&#128269; Find Donors</a>
             <a href="<?php echo baseUrl(); ?>/register.php?role=donor" class="btn btn-large btn-glass">&#10084; Become a Donor</a>
