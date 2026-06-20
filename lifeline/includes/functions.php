@@ -729,13 +729,13 @@ function getPatientBloodTypesForDonor(string $donorType): array {
 }
 
 // Geolocation: Convert city/state to lat/lng using Nominatim (OpenStreetMap)
-function geocodeLocation(string $city, string $state, string $country = 'India'): ?array {
+function geocodeLocation(string $city, string $state, string $country = 'Ethiopia'): ?array {
     $query = trim($city . ', ' . $state . ', ' . $country);
     $url = 'https://nominatim.openstreetmap.org/search?' . http_build_query([
         'q' => $query,
         'format' => 'json',
         'limit' => 1,
-        'countrycodes' => 'in'
+        'countrycodes' => 'et'
     ]);
     
     $opts = [
@@ -778,7 +778,7 @@ function geocodeLocation(string $city, string $state, string $country = 'India')
 function geocodeIfChanged(array $new, array $old = []): ?array {
     $city    = trim($new['city'] ?? '');
     $state   = trim($new['state'] ?? '');
-    $country = trim($new['country'] ?? 'India');
+    $country = trim($new['country'] ?? 'Ethiopia');
 
     if ($city === '' && $state === '') {
         return null; // nothing to geocode
@@ -788,7 +788,7 @@ function geocodeIfChanged(array $new, array $old = []): ?array {
     $unchanged = isset($old['city'], $old['state'])
         && strcasecmp($city, (string)$old['city']) === 0
         && strcasecmp($state, (string)$old['state']) === 0
-        && strcasecmp($country, (string)($old['country'] ?? 'India')) === 0;
+        && strcasecmp($country, (string)($old['country'] ?? 'Ethiopia')) === 0;
     $haveCoords = isset($old['latitude'], $old['longitude'])
         && $old['latitude'] !== null && $old['longitude'] !== null;
     if ($unchanged && $haveCoords) {
@@ -904,4 +904,41 @@ function exportToCsv(array $headers, array $rows, string $filename): void {
 
     fclose($output);
     exit;
+}
+
+/**
+ * Award donation-milestone achievements (FR-41).
+ *
+ * Call this inside a transaction immediately after incrementing
+ * donor_profiles.total_donations and updating the tier.
+ *
+ * The achievements table has a UNIQUE KEY on (donor_id, type), so
+ * INSERT IGNORE is safe for re-runs or concurrent requests.
+ */
+function checkAndAwardMilestones(PDO $pdo, int $donorId, int $totalDonations): void {
+    static $milestones = [
+        1  => ['type' => 'first_donation',    'title' => 'First Drop',         'desc' => 'Completed your first donation!'],
+        5  => ['type' => 'fifth_donation',    'title' => 'Rising Hero',         'desc' => 'Donated 5 times — you\'re a rising hero!'],
+        10 => ['type' => 'tenth_donation',    'title' => 'Lifesaver',           'desc' => 'Donated 10 times — a true lifesaver!'],
+        20 => ['type' => 'twentieth_donation','title' => 'Platinum Guardian',   'desc' => 'Donated 20 times — Platinum Guardian status!'],
+    ];
+
+    if (!isset($milestones[$totalDonations])) {
+        return;
+    }
+
+    $m = $milestones[$totalDonations];
+    $insAch = $pdo->prepare("
+        INSERT IGNORE INTO achievements (donor_id, type, title, description)
+        VALUES (?, ?, ?, ?)
+    ");
+    $insAch->execute([$donorId, $m['type'], $m['title'], $m['desc']]);
+
+    if ($insAch->rowCount() > 0) {
+        $insNotif = $pdo->prepare("
+            INSERT INTO notifications (user_id, type, title, message, link)
+            VALUES (?, 'achievement', ?, ?, '/donor/dashboard.php')
+        ");
+        $insNotif->execute([$donorId, 'Achievement Unlocked: ' . $m['title'], $m['desc']]);
+    }
 }

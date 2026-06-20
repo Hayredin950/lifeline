@@ -96,10 +96,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $stmt = $pdo->prepare("UPDATE donor_profiles SET tier = ? WHERE user_id = ?");
                     $stmt->execute([$tier, $match['donor_id']]);
 
+                    // Award milestones (FR-41).
+                    checkAndAwardMilestones($pdo, (int)$match['donor_id'], (int)$total);
+
                     // Notify donor
-                     $notifMessage = "Your recent donation at " . $profile['hospital_name'] . " has been recorded. Thank you for saving a life!";
-                     $stmt = $pdo->prepare("INSERT INTO notifications (user_id, type, title, message) VALUES (?, 'donation', 'Donation Recorded!', ?)");
-                     $stmt->execute([$match['donor_id'], $notifMessage]);
+                    $notifMessage = "Your recent donation at " . $profile['hospital_name'] . " has been recorded. Thank you for saving a life!";
+                    $stmt = $pdo->prepare("INSERT INTO notifications (user_id, type, title, message) VALUES (?, 'donation', 'Donation Recorded!', ?)");
+                    $stmt->execute([$match['donor_id'], $notifMessage]);
                 }
                 
                 $pdo->commit();

@@ -69,7 +69,7 @@ trust-ready, scalable, billion-dollar platform. Check a box (`[x]`) the moment a
 
 ### 1.3 Engagement completion
 - [x] Finish testimonial submission + moderation flow — BM · FR-42 *(`donor/submit_testimonial.php` + `admin/testimonials.php`; approve/reject with CSRF; Quick Actions link in donor dashboard; pending count on admin dashboard)*
-- [ ] Achievement award engine on donation milestones — EM · FR-41
+- [x] Achievement award engine on donation milestones — EM · FR-41 *(`checkAndAwardMilestones()` in functions.php; awards 1st/5th/10th/20th donation milestones via INSERT IGNORE into achievements + in-app notification; triggered in hospital/request_matches.php when status→donated)*
 - [ ] Notification preferences + unsubscribe center — EM · FR-32
 
 ### 1.4 Compliance baseline
