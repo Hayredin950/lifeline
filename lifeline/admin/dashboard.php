@@ -100,6 +100,11 @@ include '../includes/header.php';
         <p>Manage active countries, per-country GDPR/HIPAA flags, cooloff days, and locale defaults.</p>
         <span class="btn mt-10">Open</span>
     </a>
+    <a href="<?php echo baseUrl(); ?>/admin/component_types.php" class="card no-underline text-inherit">
+        <h2>Component Types</h2>
+        <p>Manage the donation component catalogue — plasma, platelets, bone marrow, organs. Adjust cooloff periods and enrolment counts.</p>
+        <span class="btn mt-10">Open</span>
+    </a>
 </div>
 
 <?php include '../includes/footer.php'; ?>

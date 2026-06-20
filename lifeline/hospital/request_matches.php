@@ -129,6 +129,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
+// Component code for this request — filters donors enrolled in the specific component type.
+$componentCode    = $request['component_code'] ?? 'whole_blood';
+$filterComponent  = ($componentCode && $componentCode !== 'whole_blood');
+
 // Compatible donors — ranked by distance from the hospital when we have geo coords (FR-20).
 $compatTypes = getCompatibleDonorBloodTypes($request['patient_blood_type']);
 $matches = [];
@@ -144,6 +148,11 @@ if (!empty($compatTypes)) {
                                (IFNULL(SUM(dm2.status='donated'),0) + IFNULL(SUM(dm2.status IN ('declined','cancelled')),0) + 2)
                          FROM donor_matches dm2 WHERE dm2.donor_id = dp.user_id)";
 
+    // Component JOIN: when the request targets a specific component (non-whole-blood),
+    // restrict to donors enrolled in that component via donor_component_registrations.
+    $compJoin  = $filterComponent ? "JOIN donor_component_registrations dcr ON dcr.donor_id = dp.user_id AND dcr.component_code = ? AND dcr.is_active = 1" : "";
+    $compParam = $filterComponent ? [$componentCode] : [];
+
     if ($hasHospGeo) {
         // Primary: distance ASC; secondary: reliability DESC; tertiary: recency DESC.
         $sql = "SELECT dp.*, u.email, dm.id as match_id, dm.status as match_status,
@@ -152,12 +161,12 @@ if (!empty($compatTypes)) {
                 FROM donor_profiles dp
                 JOIN users u ON dp.user_id = u.id
                 LEFT JOIN donor_matches dm ON dm.donor_id = dp.user_id AND dm.request_id = ?
+                $compJoin
                 WHERE u.is_active = true AND dp.is_available = true
                   AND dp.blood_type IN ($in)
                   AND dp.latitude IS NOT NULL
                 ORDER BY distance_km ASC, reliability_score DESC, dp.last_donation_date DESC";
-        $params = [(float)$hospLng, (float)$hospLat, $requestId];
-        $params = array_merge($params, $compatTypes);
+        $params = array_merge([(float)$hospLng, (float)$hospLat, $requestId], $compParam, $compatTypes);
     } else {
         $sql = "SELECT dp.*, u.email, dm.id as match_id, dm.status as match_status,
                        NULL AS distance_km,
@@ -165,11 +174,11 @@ if (!empty($compatTypes)) {
                 FROM donor_profiles dp
                 JOIN users u ON dp.user_id = u.id
                 LEFT JOIN donor_matches dm ON dm.donor_id = dp.user_id AND dm.request_id = ?
+                $compJoin
                 WHERE u.is_active = true AND dp.is_available = true
                   AND dp.blood_type IN ($in)
                 ORDER BY reliability_score DESC, dp.last_donation_date DESC, dp.full_name";
-        $params = [$requestId];
-        $params = array_merge($params, $compatTypes);
+        $params = array_merge([$requestId], $compParam, $compatTypes);
     }
 
     $stmt = $pdo->prepare($sql);
@@ -184,12 +193,12 @@ if (!empty($compatTypes)) {
                      FROM donor_profiles dp
                      JOIN users u ON dp.user_id = u.id
                      LEFT JOIN donor_matches dm ON dm.donor_id = dp.user_id AND dm.request_id = ?
+                     $compJoin
                      WHERE u.is_active = true AND dp.is_available = true
                        AND dp.blood_type IN ($in)
                        AND dp.latitude IS NULL
                      ORDER BY reliability_score DESC, dp.last_donation_date DESC, dp.full_name";
-        $noGeoParams = [$requestId];
-        $noGeoParams = array_merge($noGeoParams, $compatTypes);
+        $noGeoParams = array_merge([$requestId], $compParam, $compatTypes);
         $noGeoStmt = $pdo->prepare($noGeoSql);
         $noGeoStmt->execute($noGeoParams);
         $matches = array_merge($matches, $noGeoStmt->fetchAll());
@@ -203,7 +212,11 @@ include '../includes/header.php';
     <div class="card-header">
         <div>
             <h1>Manage Matches for Request #<?php echo $requestId; ?></h1>
-            <p class="m-0 text-muted">Patient needs <strong><?php echo htmlspecialchars($request['patient_blood_type']); ?></strong> &middot; Urgency: <?php echo ucfirst($request['urgency']); ?></p>
+            <p class="m-0 text-muted">Patient needs <strong><?php echo htmlspecialchars($request['patient_blood_type']); ?></strong>
+                <?php if ($filterComponent): ?>
+                &middot; Component: <strong><?php echo htmlspecialchars($componentCode); ?></strong>
+                <?php endif; ?>
+                &middot; Urgency: <?php echo ucfirst($request['urgency']); ?></p>
         </div>
         <form method="POST" action="" class="flex gap-8 items-center">
             <input type="hidden" name="csrf_token" value="<?php echo csrfToken(); ?>">

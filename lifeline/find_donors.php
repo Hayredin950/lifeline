@@ -2,10 +2,11 @@
 $pageTitle = 'Find Blood Donors';
 require_once 'includes/functions.php';
 
-$bloodType = $_GET['blood_type'] ?? '';
-$city      = trim($_GET['city'] ?? '');
-$state     = trim($_GET['state'] ?? '');
-$radius    = isset($_GET['radius']) ? max(1, (int)$_GET['radius']) : 50;
+$bloodType     = $_GET['blood_type'] ?? '';
+$city          = trim($_GET['city'] ?? '');
+$state         = trim($_GET['state'] ?? '');
+$radius        = isset($_GET['radius']) ? max(1, (int)$_GET['radius']) : 50;
+$componentCode = preg_replace('/[^a-z_]/', '', $_GET['component'] ?? '');
 
 $searchLat = null;
 $searchLng = null;
@@ -27,6 +28,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $hasSearch) {
         }
     }
 
+    // Component filter: join registrations when a specific component is requested.
+    $filterComp = ($componentCode && $componentCode !== 'whole_blood');
+    $compJoin   = $filterComp ? "JOIN donor_component_registrations dcr ON dcr.donor_id = dp.user_id AND dcr.component_code = ? AND dcr.is_active = 1" : "";
+    $compParam  = $filterComp ? [$componentCode] : [];
+
     if ($geoSearch) {
         // Distance-ranked query: donors with coords sorted by km from search point;
         // coordless donors appended last so geocoding gaps never hide a willing donor.
@@ -35,13 +41,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $hasSearch) {
                    ST_Distance_Sphere(dp.geo, POINT(?, ?)) / 1000 AS distance_km
             FROM donor_profiles dp
             JOIN users u ON dp.user_id = u.id
+            $compJoin
             WHERE u.is_active = true
               AND dp.latitude IS NOT NULL
         ";
-        $params = [$searchLng, $searchLat];
+        $params = array_merge([$searchLng, $searchLat], $compParam);
     } else {
-        $sql    = "SELECT dp.*, u.email, NULL AS distance_km FROM donor_profiles dp JOIN users u ON dp.user_id = u.id WHERE u.is_active = true";
-        $params = [];
+        $sql    = "SELECT dp.*, u.email, NULL AS distance_km FROM donor_profiles dp JOIN users u ON dp.user_id = u.id $compJoin WHERE u.is_active = true";
+        $params = $compParam;
     }
 
     $showAll = isset($_GET['show_all']) && $_GET['show_all'] == '1';
@@ -85,9 +92,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $hasSearch) {
             SELECT dp.*, u.email, NULL AS distance_km
             FROM donor_profiles dp
             JOIN users u ON dp.user_id = u.id
+            $compJoin
             WHERE u.is_active = true AND u.deleted_at IS NULL AND dp.latitude IS NULL
         ";
-        $fbParams = [];
+        $fbParams = $compParam;
         if (!$showAll) {
             $fallbackSql .= " AND (dp.last_donation_date IS NULL OR dp.last_donation_date <= DATE_SUB(CURDATE(), INTERVAL ? DAY)) AND dp.is_available = true";
             $fbParams[] = DONATION_COOLOFF_DAYS;
@@ -115,6 +123,19 @@ include 'includes/header.php';
                 <option value="">Any</option>
                 <?php foreach (['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] as $bt): ?>
                     <option value="<?php echo $bt; ?>" <?php echo $bloodType === $bt ? 'selected' : ''; ?>><?php echo $bt; ?></option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        <div class="form-group flex-1 minw-180 mb-0">
+            <label for="component">Component</label>
+            <select id="component" name="component">
+                <option value="">Any (Whole Blood)</option>
+                <?php
+                $compRows = $pdo->query("SELECT code, label FROM donation_components WHERE is_active = 1 ORDER BY id")->fetchAll();
+                foreach ($compRows as $cr): ?>
+                    <option value="<?php echo htmlspecialchars($cr['code']); ?>" <?php echo $componentCode === $cr['code'] ? 'selected' : ''; ?>>
+                        <?php echo htmlspecialchars($cr['label']); ?>
+                    </option>
                 <?php endforeach; ?>
             </select>
         </div>

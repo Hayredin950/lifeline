@@ -197,6 +197,7 @@ include '../includes/header.php';
                 <a href="<?php echo baseUrl(); ?>/leaderboard.php" class="btn btn-small btn-secondary w-full text-center">View Leaderboard</a>
                 <a href="<?php echo baseUrl(); ?>/donor/submit_testimonial.php" class="btn btn-small btn-secondary w-full text-center">Share Your Story</a>
                 <a href="<?php echo baseUrl(); ?>/donor/notification_prefs.php" class="btn btn-small btn-secondary w-full text-center">Notification Preferences</a>
+                <a href="<?php echo baseUrl(); ?>/donor/component_registry.php" class="btn btn-small btn-secondary w-full text-center">Component Registries</a>
             </div>
         </div>
     </div>
