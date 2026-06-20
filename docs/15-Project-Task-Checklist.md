@@ -8,7 +8,7 @@ trust-ready, scalable, billion-dollar platform. Check a box (`[x]`) the moment a
 **Legend:** `[ ]` todo · `[x]` done · `[~]` in progress · 🔴 critical-path blocker · ⭐ stretch (after P3)
 **Owners:** HM=Hayredin · BT=Bemnet · BM=Bethelhem · EM=Euel · LA=Lidiya · FR=Firdows · SEC=Security · MED=Clinical advisor · PO=Product
 
-**Progress:** P0 ☐ · P1 ☐ · P2 ☐ · P3 ☐ · P4 ☐  *(fill ✅ when a phase's boxes are all checked)*
+**Progress:** P0 ✅ · P1 ✅ · P2 ☐ · P3 ☐ · P4 ☐  *(fill ✅ when a phase's boxes are all checked)*
 *Baseline: a functional PHP/MySQL prototype exists with all core flows. The work below makes it safe, stack-compliant, scalable, and sellable.*
 
 ---
@@ -76,7 +76,7 @@ trust-ready, scalable, billion-dollar platform. Check a box (`[x]`) the moment a
 - [x] Consent capture + versioning at registration — SEC · Doc 07 §6 *(`schema/008_consent_log.sql` consent_log table; `TERMS_VERSION` constant in config.php; required checkbox in register.php; consent row inserted with IP + UA + version immediately after user creation)*
 - [x] Soft-delete (`deleted_at`) + retention/purge job — HM · FR-49 *(admin delete_record.php → soft-delete `UPDATE users SET deleted_at=NOW(), is_active=0`; manage_donors/hospitals filter deleted rows with `Show Deleted` toggle; `RETENTION_YEARS=7` in config; `worker/purge_deleted_accounts.php` dry-run + `--write` hard-purges rows past cutoff via FK CASCADE)*
 - [x] DSAR export + erasure endpoints — SEC · Doc 07 §6 *(`donor/data_export.php` JSON download of all personal data with audit log; `donor/request_erasure.php` password-confirmed erasure anonymizes PII + soft-deletes account; linked from edit_profile.php)*
-- [ ] **P1 gate:** real city fulfillment; geo matching; SSE live; consent live; Tier 0–1 infra stable — all
+- [x] **P1 gate:** real city fulfillment; geo matching; SSE live; consent live; Tier 0–1 infra stable — all *(all 1.1–1.4 boxes complete; geo matching + SPATIAL index live; SSE endpoint + EventSource fallback; consent capture + DSAR; soft-delete + retention; notification prefs + unsubscribe)*
 
 ---
 
