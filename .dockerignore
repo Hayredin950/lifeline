@@ -1,0 +1,13 @@
+.git
+.github
+.vercel
+docs/
+schema/
+worker/
+docker/
+*.md
+*.sh
+phpstan.neon
+docker-compose*.yml
+lifeline/.env*
+lifeline/uploads/

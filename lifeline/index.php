@@ -2,47 +2,79 @@
 require_once 'includes/functions.php';
 $pageTitle = 'Home';
 
-// Stats
-$donorCount = $pdo->query("SELECT COUNT(*) FROM donor_profiles")->fetchColumn();
-$hospitalCount = $pdo->query("SELECT COUNT(*) FROM hospital_profiles")->fetchColumn();
-$requestCount = $pdo->query("SELECT COUNT(*) FROM blood_requests WHERE status = 'open'")->fetchColumn();
-$fulfilledCount = $pdo->query("SELECT COUNT(*) FROM blood_requests WHERE status = 'fulfilled'")->fetchColumn();
-$totalDonations = $pdo->query("SELECT COUNT(*) FROM donation_history")->fetchColumn();
+// Stats — cached 60 s (NFR-01)
+$homeStats = cacheGet('home:stats');
+if ($homeStats === null) {
+    $pdoR = getReadPdo();
+    $homeStats = [
+        'donorCount'    => (int)$pdoR->query("SELECT COUNT(*) FROM donor_profiles")->fetchColumn(),
+        'hospitalCount' => (int)$pdoR->query("SELECT COUNT(*) FROM hospital_profiles")->fetchColumn(),
+        'requestCount'  => (int)$pdoR->query("SELECT COUNT(*) FROM blood_requests WHERE status = 'open'")->fetchColumn(),
+        'fulfilledCount'=> (int)$pdoR->query("SELECT COUNT(*) FROM blood_requests WHERE status = 'fulfilled'")->fetchColumn(),
+        'totalDonations'=> (int)$pdoR->query("SELECT COUNT(*) FROM donation_history")->fetchColumn(),
+    ];
+    cacheSet('home:stats', $homeStats, 60);
+}
+$donorCount    = $homeStats['donorCount'];
+$hospitalCount = $homeStats['hospitalCount'];
+$requestCount  = $homeStats['requestCount'];
+$fulfilledCount= $homeStats['fulfilledCount'];
+$totalDonations= $homeStats['totalDonations'];
 
-// Recent urgent requests
-$stmt = $pdo->query("
-    SELECT br.*, hp.hospital_name 
-    FROM blood_requests br
-    LEFT JOIN hospital_profiles hp ON br.hospital_id = hp.user_id
-    WHERE br.status = 'open'
-    ORDER BY br.created_at DESC
-    LIMIT 5
-");
-$recentRequests = $stmt->fetchAll();
+// Recent urgent requests (cached 30 s)
+$recentRequests = cacheGet('home:recent_requests');
+if ($recentRequests === null) {
+    $pdoR = getReadPdo();
+    $stmt = $pdoR->query("
+        SELECT br.*, hp.hospital_name
+        FROM blood_requests br
+        LEFT JOIN hospital_profiles hp ON br.hospital_id = hp.user_id
+        WHERE br.status = 'open'
+        ORDER BY br.created_at DESC
+        LIMIT 5
+    ");
+    $recentRequests = $stmt->fetchAll();
+    cacheSet('home:recent_requests', $recentRequests, 30);
+}
 
-// Featured donors for spotlight
-$featuredDonors = $pdo->query("
-    SELECT dp.full_name, dp.blood_type, dp.city, dp.is_available, dp.total_donations, dp.tier, dp.profile_pic, dp.gender
-    FROM donor_profiles dp JOIN users u ON dp.user_id = u.id
-    WHERE u.is_active = true AND dp.is_available = true
-    ORDER BY COALESCE(dp.total_donations, 0) DESC, COALESCE(dp.last_donation_date, '1970-01-01') DESC
-    LIMIT 5
-")->fetchAll();
+// Featured donors (cached 120 s)
+$featuredDonors = cacheGet('home:featured_donors');
+if ($featuredDonors === null) {
+    $pdoR = getReadPdo();
+    $featuredDonors = $pdoR->query("
+        SELECT dp.full_name, dp.blood_type, dp.city, dp.is_available, dp.total_donations, dp.tier, dp.profile_pic, dp.gender
+        FROM donor_profiles dp JOIN users u ON dp.user_id = u.id
+        WHERE u.is_active = true AND dp.is_available = true
+        ORDER BY COALESCE(dp.total_donations, 0) DESC, COALESCE(dp.last_donation_date, '1970-01-01') DESC
+        LIMIT 5
+    ")->fetchAll();
+    cacheSet('home:featured_donors', $featuredDonors, 120);
+}
 
-// Testimonials
-$testimonials = $pdo->query("
-    SELECT t.*, dp.full_name as donor_name
-    FROM testimonials t
-    LEFT JOIN donor_profiles dp ON t.donor_id = dp.user_id
-    WHERE t.is_approved = true
-    ORDER BY t.created_at DESC
-    LIMIT 3
-")->fetchAll();
+// Testimonials (cached 300 s)
+$testimonials = cacheGet('home:testimonials');
+if ($testimonials === null) {
+    $pdoR = getReadPdo();
+    $testimonials = $pdoR->query("
+        SELECT t.*, dp.full_name as donor_name
+        FROM testimonials t
+        LEFT JOIN donor_profiles dp ON t.donor_id = dp.user_id
+        WHERE t.is_approved = true
+        ORDER BY t.created_at DESC
+        LIMIT 3
+    ")->fetchAll();
+    cacheSet('home:testimonials', $testimonials, 300);
+}
 
-// Blood type distribution for chart
-$bloodDist = $pdo->query("
-    SELECT blood_type, COUNT(*) as count FROM donor_profiles GROUP BY blood_type ORDER BY count DESC
-")->fetchAll();
+// Blood type distribution (cached 300 s)
+$bloodDist = cacheGet('home:blood_dist');
+if ($bloodDist === null) {
+    $pdoR = getReadPdo();
+    $bloodDist = $pdoR->query("
+        SELECT blood_type, COUNT(*) as count FROM donor_profiles GROUP BY blood_type ORDER BY count DESC
+    ")->fetchAll();
+    cacheSet('home:blood_dist', $bloodDist, 300);
+}
 
 include 'includes/header.php';
 ?>

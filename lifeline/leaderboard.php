@@ -13,42 +13,51 @@ if ($period === 'month') {
     $dateFilter = "AND dh.donation_date >= NOW() - INTERVAL 1 YEAR";
 }
 
-$pdoR = getReadPdo();
-$leaderboard = $pdoR->query("
-    SELECT
-        dp.user_id,
-        dp.full_name,
-        dp.blood_type,
-        dp.city,
-        dp.state,
-        dp.total_donations,
-        dp.donation_points,
-        dp.tier,
-        dp.is_verified,
-        (SELECT COUNT(*) FROM donation_history dh WHERE dh.donor_id = dp.user_id $dateFilter) as period_donations,
-        (SELECT MAX(donation_date) FROM donation_history dh WHERE dh.donor_id = dp.user_id $dateFilter) as last_donation
-    FROM donor_profiles dp
-    JOIN users u ON dp.user_id = u.id
-    WHERE u.is_active = true AND u.deleted_at IS NULL
-    ORDER BY period_donations DESC, dp.total_donations DESC, dp.donation_points DESC
-    LIMIT $limit
-")->fetchAll();
+// Leaderboard cached 120 s per period+limit combination (NFR-01).
+$cacheKey    = 'leaderboard:' . $period . ':' . $limit;
+$cachedData  = cacheGet($cacheKey);
 
-// Get achievements count per donor
-$achievements = [];
-if (count($leaderboard) > 0) {
-    $userIds = array_column($leaderboard, 'user_id');
-    $in = implode(',', array_fill(0, count($userIds), '?'));
-    $stmt = $pdoR->prepare("
-        SELECT donor_id, COUNT(*) as count
-        FROM donor_matches
-        WHERE donor_id IN ($in) AND status = 'donated'
-        GROUP BY donor_id
-    ");
-    $stmt->execute($userIds);
-    foreach ($stmt->fetchAll() as $a) {
-        $achievements[$a['donor_id']] = $a['count'];
+if ($cachedData !== null) {
+    $leaderboard  = $cachedData['leaderboard'];
+    $achievements = $cachedData['achievements'];
+} else {
+    $pdoR = getReadPdo();
+    $leaderboard = $pdoR->query("
+        SELECT
+            dp.user_id,
+            dp.full_name,
+            dp.blood_type,
+            dp.city,
+            dp.state,
+            dp.total_donations,
+            dp.donation_points,
+            dp.tier,
+            dp.is_verified,
+            (SELECT COUNT(*) FROM donation_history dh WHERE dh.donor_id = dp.user_id $dateFilter) as period_donations,
+            (SELECT MAX(donation_date) FROM donation_history dh WHERE dh.donor_id = dp.user_id $dateFilter) as last_donation
+        FROM donor_profiles dp
+        JOIN users u ON dp.user_id = u.id
+        WHERE u.is_active = true AND u.deleted_at IS NULL
+        ORDER BY period_donations DESC, dp.total_donations DESC, dp.donation_points DESC
+        LIMIT $limit
+    ")->fetchAll();
+
+    $achievements = [];
+    if (count($leaderboard) > 0) {
+        $userIds = array_column($leaderboard, 'user_id');
+        $in = implode(',', array_fill(0, count($userIds), '?'));
+        $stmt = $pdoR->prepare("
+            SELECT donor_id, COUNT(*) as count
+            FROM donor_matches
+            WHERE donor_id IN ($in) AND status = 'donated'
+            GROUP BY donor_id
+        ");
+        $stmt->execute($userIds);
+        foreach ($stmt->fetchAll() as $a) {
+            $achievements[$a['donor_id']] = $a['count'];
+        }
     }
+    cacheSet($cacheKey, ['leaderboard' => $leaderboard, 'achievements' => $achievements], 120);
 }
 
 // Top 3 for podium

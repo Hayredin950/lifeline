@@ -1,0 +1,20 @@
+parameters:
+    level: 3
+    paths:
+        - lifeline/
+        - worker/
+        - setup_admin.php
+    excludePaths:
+        - lifeline/assets/
+        - lifeline/uploads/
+    bootstrapFiles:
+        - lifeline/includes/config.php
+    ignoreErrors:
+        # Global $pdo is injected via db.php bootstrap in all app pages
+        - '#Variable \$pdo might not be defined#'
+        - '#Access to an undefined variable \$pdo#'
+        # Dynamic SQL built with trusted internal params is expected
+        - '#Cannot access offset .* on mixed#'
+    treatPhpDocTypesAsCertain: false
+    checkMissingIterableValueType: false
+    reportUnmatchedIgnoredErrors: false

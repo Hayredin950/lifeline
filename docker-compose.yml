@@ -1,0 +1,94 @@
+version: "3.9"
+
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    environment:
+      APP_ENV: production
+      BASE_URL: "http://localhost:8080"
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: lifeline_db
+      DB_USER: lifeline
+      DB_PASS: "${DB_PASS}"
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REGION_ID: et-central
+      COUNTRY_ISO2: ET
+      TERMS_VERSION: "1.0"
+      HEALTH_TOKEN: "${HEALTH_TOKEN}"
+    volumes:
+      - uploads:/var/www/html/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - lifeline
+
+  db:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: "${DB_ROOT_PASS}"
+      MYSQL_DATABASE: lifeline_db
+      MYSQL_USER: lifeline
+      MYSQL_PASSWORD: "${DB_PASS}"
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./schema:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - lifeline
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    networks:
+      - lifeline
+
+  worker:
+    build: .
+    restart: unless-stopped
+    entrypoint: >
+      sh -c "while true; do
+        php /var/www/worker/process_notifications.php;
+        php /var/www/worker/compute_forecasts.php;
+        sleep 60;
+      done"
+    environment:
+      APP_ENV: production
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: lifeline_db
+      DB_USER: lifeline
+      DB_PASS: "${DB_PASS}"
+      REDIS_HOST: redis
+    volumes:
+      - ./worker:/var/www/worker:ro
+      - ./lifeline:/var/www/html:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - lifeline
+
+volumes:
+  db_data:
+  redis_data:
+  uploads:
+
+networks:
+  lifeline:
+    driver: bridge

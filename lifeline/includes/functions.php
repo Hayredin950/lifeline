@@ -132,6 +132,61 @@ function getRateLimitRemaining(string $identifier): array {
     ];
 }
 
+// ── Fragment cache (NFR-01) ──────────────────────────────────────────────────
+// Redis when phpredis + REDIS_HOST is configured; file-based fallback otherwise.
+// Cache misses always return null — callers regenerate and store.
+
+function _cacheRedis(): ?\Redis {
+    static $r = false;
+    if ($r === false) {
+        $host = Config::get('REDIS_HOST', '');
+        if ($host !== '' && extension_loaded('redis')) {
+            try {
+                $c = new \Redis();
+                $c->connect($host, Config::getInt('REDIS_PORT', 6379));
+                $pass = Config::get('REDIS_PASSWORD', '');
+                if ($pass !== '') $c->auth($pass);
+                $r = $c;
+            } catch (\Exception $e) {
+                $r = null;
+            }
+        } else {
+            $r = null;
+        }
+    }
+    return $r;
+}
+
+function cacheGet(string $key): mixed {
+    $prefix = 'lifeline:';
+    if ($r = _cacheRedis()) {
+        $v = $r->get($prefix . $key);
+        return $v !== false ? unserialize($v) : null;
+    }
+    $file = sys_get_temp_dir() . '/ll_cache_' . md5($key);
+    if (!file_exists($file)) return null;
+    [$exp, $data] = explode('|', file_get_contents($file), 2);
+    if ((int)$exp < time()) { @unlink($file); return null; }
+    return unserialize($data);
+}
+
+function cacheSet(string $key, mixed $value, int $ttl = 120): void {
+    $prefix = 'lifeline:';
+    if ($r = _cacheRedis()) {
+        $r->setEx($prefix . $key, $ttl, serialize($value));
+        return;
+    }
+    $file = sys_get_temp_dir() . '/ll_cache_' . md5($key);
+    file_put_contents($file, (time() + $ttl) . '|' . serialize($value), LOCK_EX);
+}
+
+function cacheDel(string $key): void {
+    $prefix = 'lifeline:';
+    if ($r = _cacheRedis()) { $r->del($prefix . $key); return; }
+    $file = sys_get_temp_dir() . '/ll_cache_' . md5($key);
+    if (file_exists($file)) @unlink($file);
+}
+
 // Canonical list of supported blood types — single source of truth.
 const BLOOD_TYPES = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 // DONATION_COOLOFF_DAYS is defined in config.php (loaded ahead of this file) so

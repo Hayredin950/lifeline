@@ -120,6 +120,11 @@ include '../includes/header.php';
         <p>Weighted moving-average demand forecasts per blood type + de-identified donor propensity scoring.</p>
         <span class="btn mt-10">Open</span>
     </a>
+    <a href="<?php echo baseUrl(); ?>/admin/slo_dashboard.php" class="card no-underline text-inherit">
+        <h2>SLO Dashboard</h2>
+        <p>Real-time health: queue depth, critical request age, DB latency, replica lag, worker status.</p>
+        <span class="btn mt-10">Open</span>
+    </a>
 </div>
 
 <?php include '../includes/footer.php'; ?>
