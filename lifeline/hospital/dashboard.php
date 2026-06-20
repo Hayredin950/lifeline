@@ -121,6 +121,7 @@ include '../includes/header.php';
                 <a href="<?php echo baseUrl(); ?>/hospital/submit_verification.php" class="btn btn-small btn-secondary w-full text-center">
                     Hospital Verification
                 </a>
+                <a href="<?php echo baseUrl(); ?>/hospital/analytics.php" class="btn btn-small btn-secondary w-full text-center">Analytics</a>
             </div>
         </div>
     </div>

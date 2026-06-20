@@ -70,6 +70,11 @@ include '../includes/header.php';
         <p>Issue, view, and revoke keys for the REST API /api/v1.</p>
         <span class="btn mt-10">Open</span>
     </a>
+    <a href="<?php echo baseUrl(); ?>/admin/analytics.php" class="card no-underline text-inherit">
+        <h2>Analytics</h2>
+        <p>Platform-wide KPIs: registrations, fulfillment rates, blood type demand, geo distribution.</p>
+        <span class="btn mt-10">Open</span>
+    </a>
     <a href="<?php echo baseUrl(); ?>/admin/verify_hospitals.php" class="card no-underline text-inherit">
         <h2>Hospital Verification</h2>
         <p>Review and approve hospital license submissions for the verified badge.</p>
