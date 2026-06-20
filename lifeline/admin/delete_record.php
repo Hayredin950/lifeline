@@ -27,11 +27,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     validateCsrf();
 
     if ($type === 'donor' || $type === 'hospital') {
-        // Deleting user cascades to profile and matches
-        $stmt = $pdo->prepare("DELETE FROM users WHERE id = ?");
+        // Soft-delete: deactivate + stamp deleted_at (hard purge runs after retention period).
+        $stmt = $pdo->prepare("UPDATE users SET is_active = 0, deleted_at = NOW() WHERE id = ?");
         $stmt->execute([$id]);
-        auditLog($pdo, 'delete', $type, $id, ['label' => $label]);
-        setFlash(ucfirst($type) . ' record deleted successfully.', 'success');
+        auditLog($pdo, 'soft_delete', $type, $id, ['label' => $label]);
+        setFlash(ucfirst($type) . ' account deactivated (soft-deleted). It will be purged after the retention period.', 'success');
         redirect(baseUrl() . '/admin/manage_' . $type . 's.php');
     } elseif ($type === 'request') {
         $stmt = $pdo->prepare("DELETE FROM blood_requests WHERE id = ?");
@@ -47,8 +47,13 @@ include '../includes/header.php';
 
 <div class="card maxw-480 mx-auto my-60 text-center">
     <h1>Confirm Deletion</h1>
-    <p>Are you sure you want to permanently delete <strong><?php echo htmlspecialchars($label); ?></strong>?</p>
-    <p class="text-danger-dark fw-600">This action cannot be undone.</p>
+    <?php if ($type === 'donor' || $type === 'hospital'): ?>
+        <p>Are you sure you want to <strong>deactivate</strong> <strong><?php echo htmlspecialchars($label); ?></strong>?</p>
+        <p class="text-muted fs-90">The account will be disabled immediately. Personal data is kept for the retention period and then purged automatically.</p>
+    <?php else: ?>
+        <p>Are you sure you want to permanently delete <strong><?php echo htmlspecialchars($label); ?></strong>?</p>
+        <p class="text-danger-dark fw-600">This action cannot be undone.</p>
+    <?php endif; ?>
 
     <form method="POST" action="" class="mt-20">
         <input type="hidden" name="csrf_token" value="<?php echo csrfToken(); ?>">

@@ -22,6 +22,11 @@ if (!defined('TERMS_VERSION')) {
     define('TERMS_VERSION', '1.0');
 }
 
+// How long to retain soft-deleted user records before hard purge (FR-49).
+if (!defined('RETENTION_YEARS')) {
+    define('RETENTION_YEARS', 7);
+}
+
 class Config {
     private static array $variables = [];
     private static bool $loaded = false;

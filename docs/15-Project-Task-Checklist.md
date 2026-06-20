@@ -74,7 +74,7 @@ trust-ready, scalable, billion-dollar platform. Check a box (`[x]`) the moment a
 
 ### 1.4 Compliance baseline
 - [x] Consent capture + versioning at registration — SEC · Doc 07 §6 *(`schema/008_consent_log.sql` consent_log table; `TERMS_VERSION` constant in config.php; required checkbox in register.php; consent row inserted with IP + UA + version immediately after user creation)*
-- [ ] Soft-delete (`deleted_at`) + retention/purge job — HM · FR-49
+- [x] Soft-delete (`deleted_at`) + retention/purge job — HM · FR-49 *(admin delete_record.php → soft-delete `UPDATE users SET deleted_at=NOW(), is_active=0`; manage_donors/hospitals filter deleted rows with `Show Deleted` toggle; `RETENTION_YEARS=7` in config; `worker/purge_deleted_accounts.php` dry-run + `--write` hard-purges rows past cutoff via FK CASCADE)*
 - [ ] DSAR export + erasure endpoints — SEC · Doc 07 §6
 - [ ] **P1 gate:** real city fulfillment; geo matching; SSE live; consent live; Tier 0–1 infra stable — all
 
