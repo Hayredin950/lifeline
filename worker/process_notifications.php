@@ -32,16 +32,53 @@ function logLine(string $msg): void {
     fwrite(STDOUT, '[' . date('Y-m-d H:i:s') . '] ' . $msg . "\n");
 }
 
+/**
+ * Returns false when the recipient has opted out of this template type (FR-32).
+ * Only 'blood_request' is suppressible; transactional emails always go through.
+ */
+function shouldDeliver(PDO $pdo, array $row): bool {
+    static $suppressible = ['blood_request'];
+    if (!in_array($row['template'], $suppressible, true)) {
+        return true;
+    }
+    $stmt = $pdo->prepare("
+        SELECT dp.email_notif_prefs
+        FROM users u
+        JOIN donor_profiles dp ON dp.user_id = u.id
+        WHERE u.email = ?
+        LIMIT 1
+    ");
+    $stmt->execute([$row['recipient']]);
+    $prefJson = $stmt->fetchColumn();
+    if ($prefJson === false) {
+        return true; // not a donor account — deliver
+    }
+    $prefs = json_decode((string)$prefJson, true);
+    if (!is_array($prefs)) {
+        return true; // null prefs = all enabled
+    }
+    return $prefs[$row['template']] ?? true;
+}
+
 /** Deliver one claimed row. Returns true on success. */
 function deliver(array $row): bool {
+    global $pdo;
     $payload = json_decode($row['payload'], true) ?: [];
 
     switch ($row['template']) {
         case 'blood_request':
+            // Fetch unsubscribe URL for this recipient (FR-32).
+            $tStmt = $pdo->prepare("SELECT unsubscribe_token FROM users WHERE email = ? LIMIT 1");
+            $tStmt->execute([$row['recipient']]);
+            $tok = $tStmt->fetchColumn();
+            $unsubUrl = $tok
+                ? rtrim(Config::get('APP_URL') ?: 'http://localhost', '/') . '/unsubscribe.php?token=' . urlencode($tok) . '&type=blood_request'
+                : '';
             return EmailService::sendBloodRequestNotification(
                 $row['recipient'],
                 $payload['donor_name'] ?? 'Donor',
-                $payload['request'] ?? []
+                $payload['request'] ?? [],
+                $unsubUrl
             );
         case 'donor_welcome':
             return EmailService::sendDonorWelcome($row['recipient'], $payload['name'] ?? '');
@@ -96,6 +133,17 @@ do {
     $rows = $fetchStmt->fetchAll();
 
     foreach ($rows as $row) {
+        // Honour notification opt-outs (FR-32) — mark suppressed rows as sent so
+        // they are not retried; suppression is not a delivery failure.
+        if (!shouldDeliver($pdo, $row)) {
+            logLine("suppressed #{$row['id']} ({$row['template']} → {$row['recipient']})");
+            $u = $pdo->prepare("UPDATE notification_queue SET status='sent', processed_at=NOW(), attempts=attempts+1 WHERE id=?");
+            $u->execute([$row['id']]);
+            $processed++;
+            if ($limit && $processed >= $limit) break 2;
+            continue;
+        }
+
         $ok = false;
         $err = null;
         try {

@@ -223,7 +223,7 @@ class EmailService {
     /**
      * Send blood request notification to compatible donors
      */
-    public static function sendBloodRequestNotification(string $email, string $donorName, array $request): bool {
+    public static function sendBloodRequestNotification(string $email, string $donorName, array $request, string $unsubscribeUrl = ''): bool {
         $subject = "URGENT: Blood Donation Needed - " . $request['patient_blood_type'];
         $urgencyColor = $request['urgency'] === 'critical' ? '#991b1b' : ($request['urgency'] === 'urgent' ? '#92400e' : '#1e40af');
         $urgencyBg = $request['urgency'] === 'critical' ? '#fee2e2' : ($request['urgency'] === 'urgent' ? '#fef3c7' : '#dbeafe');
@@ -243,7 +243,11 @@ class EmailService {
             
             <a href='" . Config::get('APP_URL') . "/view_request.php?id={$request['id']}' style='display: inline-block; background: #b91c1c; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin-top: 20px;'>View Request Details</a>
             
-            <p style='margin-top: 20px; font-size: 12px; color: #6b7280;'>You received this email because your blood type matches this request. <a href='" . Config::get('APP_URL') . "/donor/edit_profile.php'>Update your preferences</a></p>
+            <p style='margin-top: 20px; font-size: 12px; color: #6b7280;'>
+                You received this email because your blood type matches this request.
+                <a href='" . Config::get('APP_URL') . "/donor/notification_prefs.php'>Manage preferences</a>
+                " . ($unsubscribeUrl ? "· <a href='" . htmlspecialchars($unsubscribeUrl, ENT_QUOTES) . "'>Unsubscribe</a>" : "") . "
+            </p>
         ";
         
         return self::send($email, $subject, $body);
