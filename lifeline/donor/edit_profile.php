@@ -62,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         trim($_POST['address'] ?? ''),
         trim($_POST['city'] ?? ''),
         trim($_POST['state'] ?? ''),
-        trim($_POST['country'] ?? 'India'),
+        trim($_POST['country'] ?? 'Ethiopia'),
         $_POST['date_of_birth'] ?: null,
         $_POST['gender'] ?? null,
         $_POST['last_donation_date'] ?: null,
@@ -207,7 +207,7 @@ include '../includes/header.php';
         </div>
         <div class="form-group">
             <label for="country">Country</label>
-            <input type="text" id="country" name="country" value="<?php echo htmlspecialchars($profile['country'] ?? 'India'); ?>">
+            <input type="text" id="country" name="country" value="<?php echo htmlspecialchars($profile['country'] ?? 'Ethiopia'); ?>">
         </div>
         <div class="form-group">
             <label for="last_donation_date">Last Donation Date</label>
@@ -247,6 +247,13 @@ include '../includes/header.php';
         
         <button type="submit" class="btn w-full">Save Changes</button>
         <p class="text-center mt-16"><a href="<?php echo baseUrl(); ?>/donor/dashboard.php">&larr; Back to Dashboard</a></p>
+
+        <hr class="my-20">
+        <h3 class="mb-8">Your Data</h3>
+        <div class="flex gap-8 flex-wrap">
+            <a href="<?php echo baseUrl(); ?>/donor/data_export.php" class="btn btn-secondary btn-small">Download My Data</a>
+            <a href="<?php echo baseUrl(); ?>/donor/request_erasure.php" class="btn btn-small bg-danger-dark">Delete My Account</a>
+        </div>
     </form>
 </div>
 
