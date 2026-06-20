@@ -115,6 +115,11 @@ include '../includes/header.php';
         <p>Create and manage consented rare-blood / clinical recruitment campaigns with eligibility matching.</p>
         <span class="btn mt-10">Open</span>
     </a>
+    <a href="<?php echo baseUrl(); ?>/admin/forecasting.php" class="card no-underline text-inherit">
+        <h2>Demand Forecasting</h2>
+        <p>Weighted moving-average demand forecasts per blood type + de-identified donor propensity scoring.</p>
+        <span class="btn mt-10">Open</span>
+    </a>
 </div>
 
 <?php include '../includes/footer.php'; ?>
