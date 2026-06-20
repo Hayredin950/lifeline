@@ -712,6 +712,27 @@ function fullBaseUrl(): string {
     return $protocol . $host . baseUrl();
 }
 
+/**
+ * Return a versioned asset URL for CDN long-cache busting (Doc 12 §3).
+ *
+ * Appends `?v=<8-char md5 of file mtime>` so CDN/browser caches are
+ * invalidated automatically when the file changes. The CDN can be configured
+ * to cache assets for 1 year (Cache-Control: max-age=31536000, immutable)
+ * because the query-string change acts as a cache key break.
+ *
+ * In CLI (worker) context there's no HTTP request, so this falls back to
+ * the plain baseUrl path.
+ */
+function assetUrl(string $path): string {
+    $base = baseUrl();
+    if (PHP_SAPI === 'cli') {
+        return $base . '/' . ltrim($path, '/');
+    }
+    $absPath = __DIR__ . '/../' . ltrim($path, '/');
+    $version = file_exists($absPath) ? substr(md5((string)filemtime($absPath)), 0, 8) : '0';
+    return $base . '/' . ltrim($path, '/') . '?v=' . $version;
+}
+
 
 // Reverse map: which patient blood types can this donor donate to?
 function getPatientBloodTypesForDonor(string $donorType): array {

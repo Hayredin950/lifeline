@@ -13,8 +13,9 @@ if ($period === 'month') {
     $dateFilter = "AND dh.donation_date >= NOW() - INTERVAL 1 YEAR";
 }
 
-$leaderboard = $pdo->query("
-    SELECT 
+$pdoR = getReadPdo();
+$leaderboard = $pdoR->query("
+    SELECT
         dp.user_id,
         dp.full_name,
         dp.blood_type,
@@ -28,7 +29,7 @@ $leaderboard = $pdo->query("
         (SELECT MAX(donation_date) FROM donation_history dh WHERE dh.donor_id = dp.user_id $dateFilter) as last_donation
     FROM donor_profiles dp
     JOIN users u ON dp.user_id = u.id
-    WHERE u.is_active = true
+    WHERE u.is_active = true AND u.deleted_at IS NULL
     ORDER BY period_donations DESC, dp.total_donations DESC, dp.donation_points DESC
     LIMIT $limit
 ")->fetchAll();
@@ -38,10 +39,10 @@ $achievements = [];
 if (count($leaderboard) > 0) {
     $userIds = array_column($leaderboard, 'user_id');
     $in = implode(',', array_fill(0, count($userIds), '?'));
-    $stmt = $pdo->prepare("
-        SELECT donor_id, COUNT(*) as count 
-        FROM donor_matches 
-        WHERE donor_id IN ($in) AND status = 'donated' 
+    $stmt = $pdoR->prepare("
+        SELECT donor_id, COUNT(*) as count
+        FROM donor_matches
+        WHERE donor_id IN ($in) AND status = 'donated'
         GROUP BY donor_id
     ");
     $stmt->execute($userIds);

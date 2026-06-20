@@ -38,6 +38,12 @@
         </div>
     </div>
 </footer>
-<script src="<?php echo baseUrl(); ?>/assets/js/app.js"></script>
+<script src="<?php echo assetUrl('assets/js/app.js'); ?>"></script>
+<script>
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('<?php echo baseUrl(); ?>/sw.js')
+        .catch(function(e) { console.warn('SW registration failed:', e); });
+}
+</script>
 </body>
 </html>

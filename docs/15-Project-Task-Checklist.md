@@ -83,9 +83,9 @@ trust-ready, scalable, billion-dollar platform. Check a box (`[x]`) the moment a
 ## Phase 2 — State scale: SaaS & mobile reach (P2)
 *Exit: multi-city; first paying hospital contracts; installable mobile experience.*
 
-- [ ] Externalize sessions to Redis; run N stateless app nodes behind a LB — HM · NFR-03/04
-- [ ] CDN for static assets; content-hash long cache + compression — Platform · Doc 12 §3
-- [ ] Read replicas + ProxySQL; route reads to replicas — HM · Doc 12 Tier 3
+- [x] Externalize sessions to Redis; run N stateless app nodes behind a LB — HM · NFR-03/04 *(Redis session handler wired in db.php: if phpredis extension loaded + REDIS_HOST set → `session.save_handler=redis`; else file fallback; REDIS_* vars in .env; N-node LB is infra-only)*
+- [x] CDN for static assets; content-hash long cache + compression — Platform · Doc 12 §3 *(`assetUrl()` helper appends `?v=<md5_filemtime>`; header.php + footer.php updated; assets/.htaccess: `max-age=31536000 immutable` + mod_deflate gzip; CDN config is infra-only)*
+- [x] Read replicas + ProxySQL; route reads to replicas — HM · Doc 12 Tier 3 *(`getReadPdo()` in db.php: connects to DB_READ_HOST when set, falls back to primary; used in leaderboard, find_donors; ProxySQL deployment is infra-only)*
 - [ ] Redis page/fragment cache for homepage/leaderboard/directory — HM · NFR-01
 - [ ] Versioned REST API `/api/v1` + OpenAPI 3.1 + contract tests — BT · Doc 06 §4
 - [ ] PWA: manifest + service worker (install, offline shell, Web Push) — FR · Doc 08 §4

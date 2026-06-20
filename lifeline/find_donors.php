@@ -74,7 +74,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $hasSearch) {
         $sql .= " ORDER BY dp.full_name";
     }
 
-    $stmt = $pdo->prepare($sql);
+    $pdoR = getReadPdo();
+    $stmt = $pdoR->prepare($sql);
     $stmt->execute($params);
     $results = $stmt->fetchAll();
 
@@ -84,7 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $hasSearch) {
             SELECT dp.*, u.email, NULL AS distance_km
             FROM donor_profiles dp
             JOIN users u ON dp.user_id = u.id
-            WHERE u.is_active = true AND dp.latitude IS NULL
+            WHERE u.is_active = true AND u.deleted_at IS NULL AND dp.latitude IS NULL
         ";
         $fbParams = [];
         if (!$showAll) {
@@ -96,7 +97,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $hasSearch) {
             $fbParams[] = $bloodType;
         }
         $fallbackSql .= " ORDER BY dp.full_name";
-        $fbStmt = $pdo->prepare($fallbackSql);
+        $fbStmt = $pdoR->prepare($fallbackSql);
         $fbStmt->execute($fbParams);
         $results = array_merge($results, $fbStmt->fetchAll());
     }

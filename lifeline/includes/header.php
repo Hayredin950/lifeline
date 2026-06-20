@@ -9,9 +9,16 @@ $flash = getFlash();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="LifeLine Blood Network - Connect blood donors with hospitals in emergencies. Find compatible donors, create urgent requests, save lives.">
     <title><?php echo isset($pageTitle) ? $pageTitle . ' - ' : ''; ?>LifeLine Blood Network</title>
-    <link rel="stylesheet" href="<?php echo baseUrl(); ?>/assets/css/style.css">
+    <link rel="stylesheet" href="<?php echo assetUrl('assets/css/style.css'); ?>">
     <!-- jQuery: self-hosted (mandated interactivity layer; no CDN for CSP/SRI hygiene) -->
-    <script src="<?php echo baseUrl(); ?>/assets/vendor/jquery-3.7.1.min.js"></script>
+    <script src="<?php echo assetUrl('assets/vendor/jquery-3.7.1.min.js'); ?>"></script>
+    <!-- PWA -->
+    <link rel="manifest" href="<?php echo baseUrl(); ?>/manifest.json">
+    <meta name="theme-color" content="#b91c1c">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="LifeLine">
 </head>
 <body>
 <header>
