@@ -55,7 +55,7 @@ $offset = $pagination['offset'];
 $actionFilter = $_GET['action'] ?? '';
 $dateFilter = $_GET['date'] ?? '';
 
-$countSql = "SELECT COUNT(*) FROM audit_logs WHERE 1=1";
+$countSql = "SELECT COUNT(*) FROM audit_logs al WHERE 1=1";
 $logSql = "SELECT al.*, u.email as user_email FROM audit_logs al LEFT JOIN users u ON al.user_id = u.id WHERE 1=1";
 $filterParams = [];
 

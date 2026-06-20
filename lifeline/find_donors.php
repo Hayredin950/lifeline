@@ -3,21 +3,47 @@ $pageTitle = 'Find Blood Donors';
 require_once 'includes/functions.php';
 
 $bloodType = $_GET['blood_type'] ?? '';
-$city = trim($_GET['city'] ?? '');
-$state = trim($_GET['state'] ?? '');
-$radius = isset($_GET['radius']) ? (int)$_GET['radius'] : 50;
+$city      = trim($_GET['city'] ?? '');
+$state     = trim($_GET['state'] ?? '');
+$radius    = isset($_GET['radius']) ? max(1, (int)$_GET['radius']) : 50;
 
 $searchLat = null;
 $searchLng = null;
+$geoSearch = false;
 
-$results = [];
+$results  = [];
 $hasSearch = isset($_GET['search']) || ($bloodType || $city || $state);
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET' && $hasSearch) {
-    $sql = "SELECT dp.*, u.email FROM donor_profiles dp JOIN users u ON dp.user_id = u.id WHERE u.is_active = true";
-    $params = [];
-    
-    // Eligibility filter: Don't show donors in cool-off unless specifically requested
+    // Try to geocode the search location for distance ranking (FR-20).
+    // Falls back to city-string filter when Nominatim is unreachable.
+    $searchCountry = trim($_GET['country'] ?? 'India');
+    if ($city !== '' || $state !== '') {
+        $coords = geocodeLocation($city, $state, $searchCountry ?: 'India');
+        if ($coords) {
+            $searchLat = $coords['latitude'];
+            $searchLng = $coords['longitude'];
+            $geoSearch = true;
+        }
+    }
+
+    if ($geoSearch) {
+        // Distance-ranked query: donors with coords sorted by km from search point;
+        // coordless donors appended last so geocoding gaps never hide a willing donor.
+        $sql = "
+            SELECT dp.*, u.email,
+                   ST_Distance_Sphere(dp.geo, POINT(?, ?)) / 1000 AS distance_km
+            FROM donor_profiles dp
+            JOIN users u ON dp.user_id = u.id
+            WHERE u.is_active = true
+              AND dp.latitude IS NOT NULL
+        ";
+        $params = [$searchLng, $searchLat];
+    } else {
+        $sql    = "SELECT dp.*, u.email, NULL AS distance_km FROM donor_profiles dp JOIN users u ON dp.user_id = u.id WHERE u.is_active = true";
+        $params = [];
+    }
+
     $showAll = isset($_GET['show_all']) && $_GET['show_all'] == '1';
     if (!$showAll) {
         $sql .= " AND (dp.last_donation_date IS NULL OR dp.last_donation_date <= DATE_SUB(CURDATE(), INTERVAL 90 DAY))";
@@ -28,20 +54,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $hasSearch) {
         $sql .= " AND dp.blood_type = ?";
         $params[] = $bloodType;
     }
-    if ($city) {
-        $sql .= " AND dp.city LIKE ?";
-        $params[] = "%" . $city . "%";
-    }
-    if ($state) {
-        $sql .= " AND dp.state LIKE ?";
-        $params[] = "%" . $state . "%";
+
+    if ($geoSearch) {
+        // Radius pre-filter (HAVING because distance_km is a computed alias).
+        $sql .= " HAVING distance_km <= ?";
+        $params[] = $radius;
+        $sql .= " ORDER BY distance_km ASC";
+    } else {
+        // No geo: fall back to city/state text filter + name sort.
+        if ($city) {
+            $sql .= " AND dp.city LIKE ?";
+            $params[] = '%' . $city . '%';
+        }
+        if ($state) {
+            $sql .= " AND dp.state LIKE ?";
+            $params[] = '%' . $state . '%';
+        }
+        $sql .= " ORDER BY dp.full_name";
     }
 
-    $sql .= " ORDER BY dp.full_name";
-    
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);
     $results = $stmt->fetchAll();
+
+    // Append coordless donors at the end when doing a geo search (never hide them).
+    if ($geoSearch) {
+        $fallbackSql = "
+            SELECT dp.*, u.email, NULL AS distance_km
+            FROM donor_profiles dp
+            JOIN users u ON dp.user_id = u.id
+            WHERE u.is_active = true AND dp.latitude IS NULL
+        ";
+        $fbParams = [];
+        if (!$showAll) {
+            $fallbackSql .= " AND (dp.last_donation_date IS NULL OR dp.last_donation_date <= DATE_SUB(CURDATE(), INTERVAL 90 DAY)) AND dp.is_available = true";
+        }
+        if ($bloodType) {
+            $fallbackSql .= " AND dp.blood_type = ?";
+            $fbParams[] = $bloodType;
+        }
+        $fallbackSql .= " ORDER BY dp.full_name";
+        $fbStmt = $pdo->prepare($fallbackSql);
+        $fbStmt->execute($fbParams);
+        $results = array_merge($results, $fbStmt->fetchAll());
+    }
 }
 
 include 'includes/header.php';
@@ -67,6 +123,14 @@ include 'includes/header.php';
             <label for="state">State</label>
             <input type="text" id="state" name="state" value="<?php echo htmlspecialchars($state); ?>" placeholder="e.g. Maharashtra">
         </div>
+        <div class="form-group flex-1 minw-120 mb-0">
+            <label for="radius">Radius (km)</label>
+            <select id="radius" name="radius">
+                <?php foreach ([10, 25, 50, 100, 200] as $r): ?>
+                    <option value="<?php echo $r; ?>" <?php echo $radius === $r ? 'selected' : ''; ?>><?php echo $r; ?> km</option>
+                <?php endforeach; ?>
+            </select>
+        </div>
         <div class="form-group flex-05 minw-120 mb-0 pt-25">
             <label class="flex items-center gap-8 cursor-pointer">
                 <input type="checkbox" name="show_all" value="1" <?php echo isset($_GET['show_all']) && $_GET['show_all'] == '1' ? 'checked' : ''; ?>>
@@ -82,7 +146,7 @@ include 'includes/header.php';
 
 <?php if ($hasSearch): ?>
 <div class="card">
-    <h2>Search Results (<?php echo count($results); ?> found)</h2>
+    <h2>Search Results (<?php echo count($results); ?> found<?php echo $geoSearch ? ', sorted by distance' : ''; ?>)</h2>
     <?php if (count($results) > 0): ?>
         <div class="table-wrapper">
             <table>
@@ -91,6 +155,7 @@ include 'includes/header.php';
                         <th>Donor</th>
                         <th>Blood Type</th>
                         <th>Location</th>
+                        <?php if ($geoSearch): ?><th>Distance</th><?php endif; ?>
                         <th>Status</th>
                         <?php if (isLoggedIn()): ?>
                             <th>Phone</th>
@@ -99,7 +164,7 @@ include 'includes/header.php';
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ($results as $d): 
+                    <?php foreach ($results as $d):
                         $statusInfo = getDonorCurrentStatus($pdo, $d['user_id']);
                     ?>
                     <tr>
@@ -111,6 +176,11 @@ include 'includes/header.php';
                         </td>
                         <td><strong><?php echo htmlspecialchars($d['blood_type']); ?></strong></td>
                         <td><?php echo htmlspecialchars(($d['city'] ? $d['city'] . ', ' : '') . $d['state']); ?></td>
+                        <?php if ($geoSearch): ?>
+                        <td class="fs-85 text-muted">
+                            <?php echo $d['distance_km'] !== null ? round($d['distance_km'], 0) . ' km' : '—'; ?>
+                        </td>
+                        <?php endif; ?>
                         <td>
                             <?php
                             $statusClass = 'text-muted';

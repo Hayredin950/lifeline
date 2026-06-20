@@ -1,77 +1,84 @@
 <?php
 require_once __DIR__ . '/db.php';
 
-// Rate limiting for login attempts
+// Rate limiting for login attempts.
+// DB-backed (DEF-12): the legacy implementation tracked attempts in $_SESSION, so an
+// attacker who dropped the session cookie reset the counter and bypassed lockout
+// entirely. These now persist in the `rate_limits` table keyed by IP|email, so the
+// limit holds across requests, processes, and cookie-less clients — matching the SOS
+// limiter. Signatures are unchanged, so callers (login.php) need no edits.
+function loginRateKey(string $identifier): string {
+    return 'login:' . md5($identifier);
+}
+
 function isRateLimited(string $identifier): bool {
+    global $pdo;
     $maxAttempts = Config::getInt('MAX_LOGIN_ATTEMPTS', 5);
-    $lockoutMinutes = Config::getInt('LOGIN_LOCKOUT_MINUTES', 15);
-    
-    $key = 'login_attempts_' . md5($identifier);
-    $lockoutKey = 'login_lockout_' . md5($identifier);
-    
-    // Check if currently locked out
-    if (isset($_SESSION[$lockoutKey]) && $_SESSION[$lockoutKey] > time()) {
-        return true;
+    $window = Config::getInt('LOGIN_LOCKOUT_MINUTES', 15) * 60;
+    try {
+        $stmt = $pdo->prepare("
+            SELECT hits FROM rate_limits
+            WHERE rate_key = ? AND window_started_at >= (NOW() - INTERVAL ? SECOND)
+        ");
+        $stmt->execute([loginRateKey($identifier), $window]);
+        $hits = (int)($stmt->fetchColumn() ?: 0);
+    } catch (Exception $e) {
+        error_log('isRateLimited failed: ' . $e->getMessage());
+        return false; // fail open — never lock a legitimate user out on infra error
     }
-    
-    // Clear expired lockout
-    if (isset($_SESSION[$lockoutKey]) && $_SESSION[$lockoutKey] <= time()) {
-        unset($_SESSION[$lockoutKey]);
-        unset($_SESSION[$key]);
-    }
-    
-    return false;
+    return $hits >= $maxAttempts;
 }
 
 function recordLoginAttempt(string $identifier): void {
+    global $pdo;
     $maxAttempts = Config::getInt('MAX_LOGIN_ATTEMPTS', 5);
-    $lockoutMinutes = Config::getInt('LOGIN_LOCKOUT_MINUTES', 15);
-    
-    $key = 'login_attempts_' . md5($identifier);
-    $lockoutKey = 'login_lockout_' . md5($identifier);
-    
-    if (!isset($_SESSION[$key])) {
-        $_SESSION[$key] = ['count' => 0, 'first_attempt' => time()];
-    }
-    
-    $_SESSION[$key]['count']++;
-    $_SESSION[$key]['last_attempt'] = time();
-    
-    // Lock out after max attempts
-    if ($_SESSION[$key]['count'] >= $maxAttempts) {
-        $_SESSION[$lockoutKey] = time() + ($lockoutMinutes * 60);
-        error_log("Rate limit triggered for: " . $identifier);
+    $window = Config::getInt('LOGIN_LOCKOUT_MINUTES', 15) * 60;
+    // Atomic increment within the fixed window (shared helper handles upsert + reset).
+    $res = rateLimitHit($pdo, loginRateKey($identifier), $maxAttempts, $window);
+    if (!$res['allowed']) {
+        error_log("Login rate limit triggered for: " . $identifier);
     }
 }
 
 function clearLoginAttempts(string $identifier): void {
-    $key = 'login_attempts_' . md5($identifier);
-    $lockoutKey = 'login_lockout_' . md5($identifier);
-    unset($_SESSION[$key]);
-    unset($_SESSION[$lockoutKey]);
+    global $pdo;
+    try {
+        $stmt = $pdo->prepare("DELETE FROM rate_limits WHERE rate_key = ?");
+        $stmt->execute([loginRateKey($identifier)]);
+    } catch (Exception $e) {
+        error_log('clearLoginAttempts failed: ' . $e->getMessage());
+    }
 }
 
 function getRateLimitRemaining(string $identifier): array {
+    global $pdo;
     $maxAttempts = Config::getInt('MAX_LOGIN_ATTEMPTS', 5);
-    $lockoutMinutes = Config::getInt('LOGIN_LOCKOUT_MINUTES', 15);
-    
-    $key = 'login_attempts_' . md5($identifier);
-    $lockoutKey = 'login_lockout_' . md5($identifier);
-    
-    if (isset($_SESSION[$lockoutKey]) && $_SESSION[$lockoutKey] > time()) {
-        $remaining = $_SESSION[$lockoutKey] - time();
+    $window = Config::getInt('LOGIN_LOCKOUT_MINUTES', 15) * 60;
+    try {
+        $stmt = $pdo->prepare("
+            SELECT hits, TIMESTAMPDIFF(SECOND, window_started_at, NOW()) AS elapsed
+            FROM rate_limits
+            WHERE rate_key = ? AND window_started_at >= (NOW() - INTERVAL ? SECOND)
+        ");
+        $stmt->execute([loginRateKey($identifier), $window]);
+        $r = $stmt->fetch();
+    } catch (Exception $e) {
+        $r = false;
+    }
+    $hits = (int)($r['hits'] ?? 0);
+    $elapsed = (int)($r['elapsed'] ?? 0);
+
+    if ($hits >= $maxAttempts) {
         return [
             'locked' => true,
-            'minutes_remaining' => ceil($remaining / 60),
-            'attempts_remaining' => 0
+            'minutes_remaining' => max(1, (int)ceil(($window - $elapsed) / 60)),
+            'attempts_remaining' => 0,
         ];
     }
-    
-    $attempts = $_SESSION[$key]['count'] ?? 0;
     return [
         'locked' => false,
         'minutes_remaining' => 0,
-        'attempts_remaining' => max(0, $maxAttempts - $attempts)
+        'attempts_remaining' => max(0, $maxAttempts - $hits),
     ];
 }
 
@@ -733,16 +740,19 @@ function geocodeLocation(string $city, string $state, string $country = 'India')
     
     $opts = [
         'http' => [
-            'header' => "User-Agent: LifeLineBloodNetwork/1.0\r\n"
+            'header'  => "User-Agent: LifeLineBloodNetwork/1.0\r\n",
+            // Bound the blocking call so a slow/unreachable Nominatim never hangs a form POST.
+            // Geocoding is best-effort here; the async worker (task 1.2) is the scale path.
+            'timeout' => 5,
         ]
     ];
     $context = stream_context_create($opts);
     $response = @file_get_contents($url, false, $context);
-    
+
     if ($response === false) {
         return null;
     }
-    
+
     $data = json_decode($response, true);
     if (!empty($data) && isset($data[0]['lat']) && isset($data[0]['lon'])) {
         return [
@@ -750,8 +760,42 @@ function geocodeLocation(string $city, string $state, string $country = 'India')
             'longitude' => (float)$data[0]['lon']
         ];
     }
-    
+
     return null;
+}
+
+/**
+ * Geocode a location only when its text actually changed (DEF-09 / FR-13).
+ *
+ * Returns ['latitude'=>float,'longitude'=>float] to persist, or null to leave the
+ * stored coords untouched. Callers fold the returned pair into their INSERT/UPDATE;
+ * a null means "no change / lookup failed" and the save proceeds regardless — geocoding
+ * is best-effort and must never block a profile save.
+ *
+ * @param array $new ['city','state','country'] from the submitted form
+ * @param array $old previous profile row (may be empty on insert)
+ */
+function geocodeIfChanged(array $new, array $old = []): ?array {
+    $city    = trim($new['city'] ?? '');
+    $state   = trim($new['state'] ?? '');
+    $country = trim($new['country'] ?? 'India');
+
+    if ($city === '' && $state === '') {
+        return null; // nothing to geocode
+    }
+
+    // Skip the network call when the location text is unchanged AND we already have coords.
+    $unchanged = isset($old['city'], $old['state'])
+        && strcasecmp($city, (string)$old['city']) === 0
+        && strcasecmp($state, (string)$old['state']) === 0
+        && strcasecmp($country, (string)($old['country'] ?? 'India')) === 0;
+    $haveCoords = isset($old['latitude'], $old['longitude'])
+        && $old['latitude'] !== null && $old['longitude'] !== null;
+    if ($unchanged && $haveCoords) {
+        return null;
+    }
+
+    return geocodeLocation($city, $state, $country);
 }
 
 // Calculate distance between two points using Haversine formula (km)
@@ -764,6 +808,41 @@ function calculateDistance(float $lat1, float $lon1, float $lat2, float $lon2): 
          sin($dLon / 2) * sin($dLon / 2);
     $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
     return $earthRadius * $c;
+}
+
+/**
+ * Compute a smoothed reliability score for a donor (FR-20).
+ *
+ * Uses Laplace smoothing so a donor with no history starts at 0.5 rather than
+ * 0 or 1, and the score converges toward the true rate as history accumulates.
+ *
+ *   score = (donated + 1) / (donated + declined + 2)   ∈ (0, 1)
+ *
+ * Also returns total_donations and last_donation_date for composite ranking.
+ *
+ * @return array{score:float, donated:int, declined:int, total_donations:int}
+ */
+function getDonorReliability(PDO $pdo, int $donorId): array {
+    try {
+        $stmt = $pdo->prepare("
+            SELECT
+                IFNULL(SUM(status = 'donated'), 0)              AS donated,
+                IFNULL(SUM(status IN ('declined','cancelled')), 0) AS declined
+            FROM donor_matches
+            WHERE donor_id = ?
+        ");
+        $stmt->execute([$donorId]);
+        $r = $stmt->fetch();
+        $donated  = (int)($r['donated']  ?? 0);
+        $declined = (int)($r['declined'] ?? 0);
+    } catch (Exception $e) {
+        $donated = $declined = 0;
+    }
+    return [
+        'score'   => ($donated + 1) / ($donated + $declined + 2),
+        'donated' => $donated,
+        'declined'=> $declined,
+    ];
 }
 
 // Audit logging

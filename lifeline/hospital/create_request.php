@@ -8,6 +8,22 @@ $profile = getHospitalProfile($pdo, $userId);
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     validateCsrf();
 
+    $bloodType = $_POST['patient_blood_type'] ?? '';
+    $urgency   = $_POST['urgency'] ?? 'normal';
+    $reqErrors = [];
+
+    if (!isValidBloodType($bloodType)) {
+        $reqErrors[] = 'Please select a valid blood type.';
+    }
+    if (!in_array($urgency, ['normal', 'urgent', 'critical'], true)) {
+        $reqErrors[] = 'Invalid urgency level.';
+    }
+
+    if (!empty($reqErrors)) {
+        setFlash(implode('<br>', $reqErrors), 'danger');
+        redirect(baseUrl() . '/hospital/create_request.php');
+    }
+
     $stmt = $pdo->prepare("
         INSERT INTO blood_requests
         (hospital_id, patient_blood_type, units_needed, urgency, required_date, city, state, hospital_address, notes)
@@ -15,9 +31,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     ");
     $stmt->execute([
         $userId,
-        $_POST['patient_blood_type'] ?? '',
-        (int)($_POST['units_needed'] ?? 1),
-        $_POST['urgency'] ?? 'normal',
+        $bloodType,
+        max(1, (int)($_POST['units_needed'] ?? 1)),
+        $urgency,
         $_POST['required_date'] ?: null,
         trim($_POST['city'] ?? ''),
         trim($_POST['state'] ?? ''),

@@ -16,6 +16,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = $_POST['password'] ?? '';
     $confirm = $_POST['confirm_password'] ?? '';
 
+    if (!in_array($role, ['donor', 'hospital'], true)) {
+        $errors[] = 'Invalid account type selected.';
+    }
+
     if (!$email || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $errors[] = 'Please provide a valid email address.';
     }
@@ -28,6 +32,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     if ($password !== $confirm) {
         $errors[] = 'Passwords do not match.';
+    }
+
+    // Role-specific field validation
+    if (empty($errors) && $role === 'donor') {
+        $bloodType = $_POST['blood_type'] ?? '';
+        $phone = trim($_POST['phone'] ?? '');
+        if (!isValidBloodType($bloodType)) {
+            $errors[] = 'Please select a valid blood type.';
+        }
+        if ($phone !== '' && !validatePhone($phone)) {
+            $errors[] = 'Please enter a valid phone number (e.g. +91 98765 43210).';
+        }
     }
 
     if (empty($errors)) {
@@ -45,11 +61,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute([$email, $hash, $role]);
         $userId = $pdo->lastInsertId();
 
+        // Geocode the registration location so the profile is map-ready for distance
+        // matching (FR-20 / DEF-09). Best-effort: null coords if the lookup fails.
+        $coords = geocodeIfChanged($_POST);
+        $lat = $coords['latitude']  ?? null;
+        $lng = $coords['longitude'] ?? null;
+
         if ($role === 'donor') {
             $stmt = $pdo->prepare("
                 INSERT INTO donor_profiles
-                (user_id, full_name, phone, blood_type, address, city, state, country, date_of_birth, gender)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                (user_id, full_name, phone, blood_type, address, city, state, country, date_of_birth, gender, latitude, longitude)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ");
             $stmt->execute([
                 $userId,
@@ -61,13 +83,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 trim($_POST['state'] ?? ''),
                 trim($_POST['country'] ?? 'India'),
                 $_POST['date_of_birth'] ?: null,
-                $_POST['gender'] ?? null
+                $_POST['gender'] ?? null,
+                $lat,
+                $lng
             ]);
         } elseif ($role === 'hospital') {
             $stmt = $pdo->prepare("
                 INSERT INTO hospital_profiles
-                (user_id, hospital_name, phone, address, city, state, country, license_number)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                (user_id, hospital_name, phone, address, city, state, country, license_number, latitude, longitude)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ");
             $stmt->execute([
                 $userId,
@@ -77,7 +101,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 trim($_POST['city'] ?? ''),
                 trim($_POST['state'] ?? ''),
                 trim($_POST['country'] ?? 'India'),
-                trim($_POST['license_number'] ?? '')
+                trim($_POST['license_number'] ?? ''),
+                $lat,
+                $lng
             ]);
         }
 

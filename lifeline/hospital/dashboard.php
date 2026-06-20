@@ -111,7 +111,7 @@ include '../includes/header.php';
             <div class="flex flex-col gap-8 mt-10">
                 <a href="<?php echo baseUrl(); ?>/find_donors.php" class="btn btn-small btn-secondary w-full text-center">Find Donors</a>
                 <a href="<?php echo baseUrl(); ?>/blood_banks.php" class="btn btn-small btn-secondary w-full text-center">Nearby Blood Banks</a>
-                <a href="<?php echo baseUrl(); ?>/admin/activity.php" class="btn btn-small btn-secondary w-full text-center">View Activity</a>
+                <a href="<?php echo baseUrl(); ?>/messages.php" class="btn btn-small btn-secondary w-full text-center">Messages</a>
             </div>
         </div>
     </div>

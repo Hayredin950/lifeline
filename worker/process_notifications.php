@@ -18,8 +18,8 @@ if (PHP_SAPI !== 'cli') {
     exit("This script may only be run from the command line.\n");
 }
 
-require_once __DIR__ . '/../app/lifeline/includes/functions.php';
-require_once __DIR__ . '/../app/lifeline/includes/email_service.php';
+require_once __DIR__ . '/../lifeline/includes/functions.php';
+require_once __DIR__ . '/../lifeline/includes/email_service.php';
 
 $opts = getopt('', ['loop', 'limit::', 'batch::', 'sleep::']);
 $loop      = isset($opts['loop']);

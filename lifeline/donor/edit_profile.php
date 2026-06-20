@@ -30,6 +30,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect(baseUrl() . '/donor/edit_profile.php');
     }
 
+    // Geocode the location when it changed, so distance matching (FR-20) has coords (DEF-09).
+    // Best-effort: a failed lookup keeps the previously stored coords.
+    $coords = geocodeIfChanged($_POST, $profile);
+    $lat = $coords['latitude']  ?? $profile['latitude'];
+    $lng = $coords['longitude'] ?? $profile['longitude'];
+
     // Update donor profile
     $stmt = $pdo->prepare("
         UPDATE donor_profiles SET
@@ -44,7 +50,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             gender = ?,
             last_donation_date = ?,
             is_available = ?,
-            profile_pic = ?
+            profile_pic = ?,
+            latitude = ?,
+            longitude = ?
         WHERE user_id = ?
     ");
     $stmt->execute([
@@ -60,6 +68,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_POST['last_donation_date'] ?: null,
         isset($_POST['is_available']) ? 1 : 0,
         $profilePic,
+        $lat,
+        $lng,
         $userId
     ]);
 

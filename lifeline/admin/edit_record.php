@@ -46,18 +46,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     validateCsrf();
 
     if ($type === 'donor') {
-        // Update users table
+        // Update users table — check email uniqueness first to avoid an unhandled UNIQUE violation.
+        $newEmail = trim($_POST['email'] ?? '');
+        if (!filter_var($newEmail, FILTER_VALIDATE_EMAIL)) {
+            setFlash('Invalid email address.', 'danger');
+            redirect(baseUrl() . '/admin/edit_record.php?type=donor&id=' . $id);
+        }
+        $taken = $pdo->prepare("SELECT id FROM users WHERE email = ? AND id != ?");
+        $taken->execute([$newEmail, $id]);
+        if ($taken->fetch()) {
+            setFlash('That email address is already used by another account.', 'danger');
+            redirect(baseUrl() . '/admin/edit_record.php?type=donor&id=' . $id);
+        }
         $stmt = $pdo->prepare("UPDATE users SET email = ?, is_active = ? WHERE id = ?");
         $stmt->execute([
-            trim($_POST['email'] ?? ''),
+            $newEmail,
             isset($_POST['is_active']) ? 1 : 0,
             $id
         ]);
+        // Re-geocode if the admin changed the location (DEF-09 / FR-20).
+        $coords = geocodeIfChanged($_POST, $record);
+        $lat = $coords['latitude']  ?? $record['latitude'];
+        $lng = $coords['longitude'] ?? $record['longitude'];
         // Update donor_profiles
         $stmt = $pdo->prepare("
             UPDATE donor_profiles SET
                 full_name = ?, phone = ?, blood_type = ?, address = ?, city = ?,
-                state = ?, country = ?, date_of_birth = ?, gender = ?, is_available = ?
+                state = ?, country = ?, date_of_birth = ?, gender = ?, is_available = ?,
+                latitude = ?, longitude = ?
             WHERE user_id = ?
         ");
         $stmt->execute([
@@ -71,6 +87,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_POST['date_of_birth'] ?: null,
             $_POST['gender'] ?? null,
             isset($_POST['is_available']) ? 1 : 0,
+            $lat,
+            $lng,
             $id
         ]);
         auditLog($pdo, 'update', 'donor', $id, null, [
@@ -89,10 +107,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             isset($_POST['is_active']) ? 1 : 0,
             $id
         ]);
+        // Re-geocode if the admin changed the location (DEF-09 / FR-20).
+        $coords = geocodeIfChanged($_POST, $record);
+        $lat = $coords['latitude']  ?? $record['latitude'];
+        $lng = $coords['longitude'] ?? $record['longitude'];
         $stmt = $pdo->prepare("
             UPDATE hospital_profiles SET
                 hospital_name = ?, phone = ?, address = ?, city = ?,
-                state = ?, country = ?, license_number = ?
+                state = ?, country = ?, license_number = ?,
+                latitude = ?, longitude = ?
             WHERE user_id = ?
         ");
         $stmt->execute([
@@ -103,6 +126,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             trim($_POST['state'] ?? ''),
             trim($_POST['country'] ?? 'India'),
             trim($_POST['license_number'] ?? ''),
+            $lat,
+            $lng,
             $id
         ]);
         auditLog($pdo, 'update', 'hospital', $id, null, [

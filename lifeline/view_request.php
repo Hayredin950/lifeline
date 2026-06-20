@@ -39,14 +39,6 @@ if (!empty($compatTypes)) {
     $matches = $stmt->fetchAll();
 }
 
-// Record match rows for tracking if hospital views (optional)
-if (isHospital() || isAdmin()) {
-    foreach ($matches as $m) {
-        $ins = $pdo->prepare("INSERT INTO donor_matches (request_id, donor_id) VALUES (?, ?) ON DUPLICATE KEY UPDATE donor_id = VALUES(donor_id)");
-        $ins->execute([$requestId, $m['user_id']]);
-    }
-}
-
 // Handle Express Interest (for donors)
 if (isLoggedIn() && isDonor() && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['express_interest'])) {
     validateCsrf();

@@ -24,9 +24,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Update match status
     if (isset($_POST['match_id']) && isset($_POST['match_status'])) {
-        $matchId = (int)$_POST['match_id'];
+        $matchId  = (int)$_POST['match_id'];
         $newStatus = $_POST['match_status'];
-        
+        $donorId  = (int)($_POST['donor_id'] ?? 0);
+
+        if (!in_array($newStatus, ['pending', 'contacted', 'confirmed', 'donated', 'declined'], true)) {
+            setFlash('Invalid match status.', 'danger');
+            redirect(baseUrl() . '/hospital/request_matches.php?request_id=' . $requestId);
+        }
+
+        // If match_id is 0, no row exists yet for this donor — create it first.
+        if ($matchId === 0 && $donorId > 0) {
+            $ins = $pdo->prepare("INSERT IGNORE INTO donor_matches (request_id, donor_id, status) VALUES (?, ?, 'pending')");
+            $ins->execute([$requestId, $donorId]);
+            $matchId = (int)$pdo->lastInsertId();
+            if ($matchId === 0) {
+                // Row already existed (INSERT IGNORE skipped); fetch its id.
+                $r = $pdo->prepare("SELECT id FROM donor_matches WHERE request_id = ? AND donor_id = ?");
+                $r->execute([$requestId, $donorId]);
+                $matchId = (int)$r->fetchColumn();
+            }
+        }
+
         // Get existing match info
         $stmt = $pdo->prepare("SELECT * FROM donor_matches WHERE id = ? AND request_id = ?");
         $stmt->execute([$matchId, $requestId]);
@@ -95,33 +114,83 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Update request status
     if (isset($_POST['request_status'])) {
+        $reqStatus = $_POST['request_status'];
+        if (!in_array($reqStatus, ['open', 'fulfilled', 'cancelled'], true)) {
+            setFlash('Invalid request status.', 'danger');
+            redirect(baseUrl() . '/hospital/request_matches.php?request_id=' . $requestId);
+        }
         $stmt = $pdo->prepare("UPDATE blood_requests SET status = ? WHERE id = ?");
-        $stmt->execute([$_POST['request_status'], $requestId]);
+        $stmt->execute([$reqStatus, $requestId]);
         setFlash('Request status updated.', 'success');
         redirect(baseUrl() . '/hospital/request_matches.php?request_id=' . $requestId);
     }
 }
 
-// Compatible donors
+// Compatible donors — ranked by distance from the hospital when we have geo coords (FR-20).
 $compatTypes = getCompatibleDonorBloodTypes($request['patient_blood_type']);
 $matches = [];
 if (!empty($compatTypes)) {
     $in = implode(',', array_fill(0, count($compatTypes), '?'));
-    $sql = "SELECT dp.*, u.email, dm.id as match_id, dm.status as match_status
-            FROM donor_profiles dp
-            JOIN users u ON dp.user_id = u.id
-            LEFT JOIN donor_matches dm ON dm.donor_id = dp.user_id AND dm.request_id = ?
-            WHERE u.is_active = true AND dp.is_available = true AND dp.blood_type IN ($in)";
-    $params = [$requestId];
-    $params = array_merge($params, $compatTypes);
-    if (!empty($request['city'])) {
-        $sql .= " AND dp.city LIKE ?";
-        $params[] = '%' . $request['city'] . '%';
+    $hospLat = $profile['latitude'] ?? null;
+    $hospLng = $profile['longitude'] ?? null;
+    $hasHospGeo = ($hospLat !== null && $hospLng !== null);
+
+    // Reliability subquery: Laplace-smoothed score = (donated+1)/(donated+declined+2).
+    // IFNULL handles donors with no match history (SUM on empty set returns NULL).
+    $reliabilitySubq = "(SELECT (IFNULL(SUM(dm2.status='donated'),0)+1) /
+                               (IFNULL(SUM(dm2.status='donated'),0) + IFNULL(SUM(dm2.status IN ('declined','cancelled')),0) + 2)
+                         FROM donor_matches dm2 WHERE dm2.donor_id = dp.user_id)";
+
+    if ($hasHospGeo) {
+        // Primary: distance ASC; secondary: reliability DESC; tertiary: recency DESC.
+        $sql = "SELECT dp.*, u.email, dm.id as match_id, dm.status as match_status,
+                       ST_Distance_Sphere(dp.geo, POINT(?, ?)) / 1000 AS distance_km,
+                       $reliabilitySubq AS reliability_score
+                FROM donor_profiles dp
+                JOIN users u ON dp.user_id = u.id
+                LEFT JOIN donor_matches dm ON dm.donor_id = dp.user_id AND dm.request_id = ?
+                WHERE u.is_active = true AND dp.is_available = true
+                  AND dp.blood_type IN ($in)
+                  AND dp.latitude IS NOT NULL
+                ORDER BY distance_km ASC, reliability_score DESC, dp.last_donation_date DESC";
+        $params = [(float)$hospLng, (float)$hospLat, $requestId];
+        $params = array_merge($params, $compatTypes);
+    } else {
+        $sql = "SELECT dp.*, u.email, dm.id as match_id, dm.status as match_status,
+                       NULL AS distance_km,
+                       $reliabilitySubq AS reliability_score
+                FROM donor_profiles dp
+                JOIN users u ON dp.user_id = u.id
+                LEFT JOIN donor_matches dm ON dm.donor_id = dp.user_id AND dm.request_id = ?
+                WHERE u.is_active = true AND dp.is_available = true
+                  AND dp.blood_type IN ($in)
+                ORDER BY reliability_score DESC, dp.last_donation_date DESC, dp.full_name";
+        $params = [$requestId];
+        $params = array_merge($params, $compatTypes);
     }
-    $sql .= " ORDER BY dp.city, dp.full_name";
+
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);
     $matches = $stmt->fetchAll();
+
+    // Append coordless donors so geo gaps never hide a willing donor.
+    if ($hasHospGeo) {
+        $noGeoSql = "SELECT dp.*, u.email, dm.id as match_id, dm.status as match_status,
+                            NULL AS distance_km,
+                            $reliabilitySubq AS reliability_score
+                     FROM donor_profiles dp
+                     JOIN users u ON dp.user_id = u.id
+                     LEFT JOIN donor_matches dm ON dm.donor_id = dp.user_id AND dm.request_id = ?
+                     WHERE u.is_active = true AND dp.is_available = true
+                       AND dp.blood_type IN ($in)
+                       AND dp.latitude IS NULL
+                     ORDER BY reliability_score DESC, dp.last_donation_date DESC, dp.full_name";
+        $noGeoParams = [$requestId];
+        $noGeoParams = array_merge($noGeoParams, $compatTypes);
+        $noGeoStmt = $pdo->prepare($noGeoSql);
+        $noGeoStmt->execute($noGeoParams);
+        $matches = array_merge($matches, $noGeoStmt->fetchAll());
+    }
 }
 
 include '../includes/header.php';
@@ -155,6 +224,8 @@ include '../includes/header.php';
                     <th>Donor</th>
                     <th>Blood Type</th>
                     <th>Location</th>
+                    <?php if ($hasHospGeo): ?><th>Distance</th><?php endif; ?>
+                    <th title="Based on confirmed/donated vs declined history">Reliability</th>
                     <th>Availability</th>
                     <th>Phone</th>
                     <th>Action</th>
@@ -163,13 +234,26 @@ include '../includes/header.php';
                 </tr>
             </thead>
             <tbody>
-                <?php foreach ($matches as $m): 
+                <?php foreach ($matches as $m):
                     $donorStatus = getDonorCurrentStatus($pdo, $m['user_id']);
                 ?>
                 <tr>
                     <td><?php echo htmlspecialchars($m['full_name']); ?></td>
                     <td><strong><?php echo htmlspecialchars($m['blood_type']); ?></strong></td>
                     <td><?php echo htmlspecialchars(($m['city'] ? $m['city'] . ', ' : '') . $m['state']); ?></td>
+                    <?php if ($hasHospGeo): ?>
+                    <td class="fs-85 text-muted">
+                        <?php echo $m['distance_km'] !== null ? round($m['distance_km'], 0) . ' km' : '—'; ?>
+                    </td>
+                    <?php endif; ?>
+                    <td class="fs-85 text-muted" title="Reliability score (donated vs declined history)">
+                        <?php
+                        $rel = isset($m['reliability_score']) ? (float)$m['reliability_score'] : 0.5;
+                        $pct = round($rel * 100);
+                        $relClass = $pct >= 75 ? 'text-success-dark' : ($pct >= 50 ? 'text-amber' : 'text-crimson');
+                        ?>
+                        <span class="<?php echo $relClass; ?>"><?php echo $pct; ?>%</span>
+                    </td>
                     <td>
                         <?php
                         $statusClass = 'text-muted';
@@ -200,6 +284,7 @@ include '../includes/header.php';
                         <form method="POST" action="" class="flex gap-6">
                             <input type="hidden" name="csrf_token" value="<?php echo csrfToken(); ?>">
                             <input type="hidden" name="match_id" value="<?php echo (int)($m['match_id'] ?? 0); ?>">
+                            <input type="hidden" name="donor_id" value="<?php echo (int)$m['user_id']; ?>">
                             <select name="match_status" class="select-inline">
                                 <option value="pending" <?php echo $status==='pending'?'selected':''; ?>>Pending</option>
                                 <option value="contacted" <?php echo $status==='contacted'?'selected':''; ?>>Contacted</option>

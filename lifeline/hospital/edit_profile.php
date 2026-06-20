@@ -13,6 +13,12 @@ $user = $stmt->fetch();
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     validateCsrf();
     
+    // Geocode the location when it changed so request matching (FR-20) ranks by real
+    // distance from the hospital (DEF-09). Best-effort: keep old coords on lookup failure.
+    $coords = geocodeIfChanged($_POST, $profile);
+    $lat = $coords['latitude']  ?? $profile['latitude'];
+    $lng = $coords['longitude'] ?? $profile['longitude'];
+
     // Update hospital profile
     $stmt = $pdo->prepare("
         UPDATE hospital_profiles SET
@@ -22,7 +28,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             city = ?,
             state = ?,
             country = ?,
-            license_number = ?
+            license_number = ?,
+            latitude = ?,
+            longitude = ?
         WHERE user_id = ?
     ");
     $stmt->execute([
@@ -33,6 +41,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         trim($_POST['state'] ?? ''),
         trim($_POST['country'] ?? 'India'),
         trim($_POST['license_number'] ?? ''),
+        $lat,
+        $lng,
         $userId
     ]);
     

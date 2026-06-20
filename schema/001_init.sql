@@ -62,6 +62,7 @@ CREATE TABLE IF NOT EXISTS `donor_profiles` (
   `country`            VARCHAR(100) DEFAULT 'India',
   `date_of_birth`      DATE DEFAULT NULL,
   `gender`             VARCHAR(10) DEFAULT NULL,
+  `profile_pic`        VARCHAR(255) DEFAULT NULL,            -- uploaded avatar filename (FR-16)
   `is_available`       TINYINT(1) DEFAULT '1',
   `last_donation_date` DATE DEFAULT NULL,
   `latitude`           DECIMAL(10,7) DEFAULT NULL,
