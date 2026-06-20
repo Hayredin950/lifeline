@@ -122,6 +122,8 @@ include '../includes/header.php';
                     Hospital Verification
                 </a>
                 <a href="<?php echo baseUrl(); ?>/hospital/analytics.php" class="btn btn-small btn-secondary w-full text-center">Analytics</a>
+                <a href="<?php echo baseUrl(); ?>/hospital/inventory.php" class="btn btn-small btn-secondary w-full text-center">Blood Inventory</a>
+                <a href="<?php echo baseUrl(); ?>/hospital/transfers.php" class="btn btn-small btn-secondary w-full text-center">Inter-Facility Transfers</a>
             </div>
         </div>
     </div>

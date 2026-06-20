@@ -116,7 +116,7 @@ trust-ready, scalable, billion-dollar platform. Check a box (`[x]`) the moment a
 
 - [x] ⭐ Multi-country rollout (per-country region cells, localized compliance) — Platform/PO *(`schema/015_country_config.sql` — 11 countries seeded with cooloff/GDPR/HIPAA flags; `region.php` extended: COUNTRY_REGISTRY, getCountryIso(), getCountryConfig() DB-backed with static fallback, isGdprCountry()/isHipaaCountry()/countryDonationCooloff() helpers, X-Country header; `admin/country_config.php` enable/disable + per-country compliance config; COUNTRY_ISO2 env var selects active country)*
 - [x] ⭐ Plasma / platelet / bone-marrow / organ-donor registries on the matching engine — EM/MED *(schema/016: `donation_components` + `donor_component_registrations` + `blood_requests.component_code`; `donor/component_registry.php` donor opt-in; `admin/component_types.php` catalogue mgmt; `request_matches.php` + `find_donors.php` filter by component_code)*
-- [ ] ⭐ Inter-facility cold-chain transfer matching + tracking — BT
+- [x] ⭐ Inter-facility cold-chain transfer matching + tracking — BT *(schema/017: `blood_unit_inventory` + `blood_unit_transfers`; `hospital/inventory.php` lot registration + expiry tracking; `hospital/transfers.php` request→accept→dispatch→receive lifecycle with cold-chain temp, notifications, audit log; `admin/transfers.php` network-wide oversight; dashboard links added)*
 - [ ] ⭐ Consented clinical-trial / rare-blood recruitment — PO/SEC/MED
 - [ ] ⭐ ML demand forecasting + donor-propensity scoring (de-identified) — BM
 - [ ] ⭐ **P4 gate:** ≥2 countries live; ≥1 adjacency line generating revenue — all

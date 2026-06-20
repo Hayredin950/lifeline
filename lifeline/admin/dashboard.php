@@ -105,6 +105,11 @@ include '../includes/header.php';
         <p>Manage the donation component catalogue — plasma, platelets, bone marrow, organs. Adjust cooloff periods and enrolment counts.</p>
         <span class="btn mt-10">Open</span>
     </a>
+    <a href="<?php echo baseUrl(); ?>/admin/transfers.php" class="card no-underline text-inherit">
+        <h2>Inter-Facility Transfers</h2>
+        <p>Network-wide oversight of cold-chain blood unit transfer requests, dispatch, and receipt.</p>
+        <span class="btn mt-10">Open</span>
+    </a>
 </div>
 
 <?php include '../includes/footer.php'; ?>
