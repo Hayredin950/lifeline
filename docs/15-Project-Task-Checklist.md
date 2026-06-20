@@ -35,7 +35,7 @@ trust-ready, scalable, billion-dollar platform. Check a box (`[x]`) the moment a
 - [x] DB-backed rate limiting keyed by IP + identifier (replaces session-only) — HM · DEF-12 *(`rate_limits` table + `rateLimitHit()`; Redis swap-in at scale per Doc 12)*
 - [x] Audit **every** mutation (admin edits + all writes) — HM · DEF-13 · FR-46 *(SOS, admin edit_record donor/hospital/request, delete, email-change confirm all audited)*
 - [x] Force-reset the default admin credential on first boot; remove from README/`setup_admin` — SEC · Doc 07 *(`schema/005` `must_change_password`; `setup_admin.php` prints one-time random pwd; `requireAuth()` confines flagged accounts to `change_password.php`; no hard-coded default)*
-- [~] Remove committed `.env*` from the tree; gitignore + scrub history; secrets manager in prod — SEC · Doc 09 §2 *(`.gitignore` added; real `.env` untracked via `git rm --cached`; history scrub via `git filter-repo` + secrets manager still TODO)*
+- [~] Remove committed `.env*` from the tree; gitignore + scrub history; secrets manager in prod — SEC · Doc 09 §2 *(`.gitignore` fixed for `lifeline/` layout; `.env` ignored; local history scrubbed with `git filter-repo` — `.env` gone from all local commits, backup bundle saved. **PENDING:** force-push rewritten history to GitHub + **rotate the leaked `DB_PASSWORD`** (already exposed on remote) + secrets manager in prod)*
 
 ### 0.3 Medium defects & clinical correctness
 - [x] Unify the cool-off constant across `isDonorEligible()`, `eligibility.php`, welcome email — MED/EM · DEF-01 · FR-27 *(`DONATION_COOLOFF_DAYS` in config.php; welcome email no longer says 56 days)*
@@ -48,7 +48,7 @@ trust-ready, scalable, billion-dollar platform. Check a box (`[x]`) the moment a
 ### 0.4 Stack compliance (jQuery mandate)
 - [x] Self-host jQuery 3.7.x; load once in `header.php` — FR · Doc 08 §1 *(`assets/vendor/jquery-3.7.1.min.js`)*
 - [x] Port messaging poller, toasts, chat form to jQuery idioms — FR/BM · Doc 08 §2 *(incl. pause-poll-on-hidden-tab; nav toggle + global form UX next)*
-- [ ] Extract design tokens; remove inline styles from PHP (`renderPagination`, pages) — BM · Doc 08 §3
+- [x] Extract design tokens; remove inline styles from PHP (`renderPagination`, pages) — BM · Doc 08 §3 *(utility + component classes + dark/functional tokens in `style.css`; `renderPagination` and ~25 pages converted; only data-driven chart-bar heights stay inline; every referenced class verified defined)*
 - [ ] **P0 gate:** fresh install → migrate → run → all 6 E2E journeys green; remaining 🔴/🟠 DEF closed; pen-test baseline clean — all · Doc 11
 
 ---
