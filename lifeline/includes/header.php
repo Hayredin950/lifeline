@@ -19,6 +19,7 @@ $flash = getFlash();
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="LifeLine">
+    <?php if (!empty($extraHead)) echo $extraHead; ?>
 </head>
 <body>
 <!-- Skip navigation link (WCAG 2.4.1) -->
@@ -35,28 +36,33 @@ $flash = getFlash();
         </button>
         <nav class="nav-links" id="primary-nav" aria-label="Primary navigation">
             <a href="<?php echo baseUrl(); ?>/index.php" class="<?php echo isActivePage('index.php') ? 'active' : ''; ?>">Home</a>
-            <a href="<?php echo baseUrl(); ?>/find_donors.php" class="<?php echo isActivePage('find_donors.php') ? 'active' : ''; ?>">Find Donors</a>
-            <a href="<?php echo baseUrl(); ?>/blood_banks.php" class="<?php echo isActivePage('blood_banks.php') ? 'active' : ''; ?>">Blood Banks</a>
-            <a href="<?php echo baseUrl(); ?>/eligibility.php" class="<?php echo isActivePage('eligibility.php') ? 'active' : ''; ?>">Eligibility</a>
-            <a href="<?php echo baseUrl(); ?>/emergency.php" class="<?php echo isActivePage('emergency.php') ? 'active' : ''; ?>">Emergency SOS</a>
-            <a href="<?php echo baseUrl(); ?>/leaderboard.php" class="<?php echo isActivePage('leaderboard.php') ? 'active' : ''; ?>">Leaderboard</a>
-            <a href="<?php echo baseUrl(); ?>/testimonials.php" class="<?php echo isActivePage('testimonials.php') ? 'active' : ''; ?>">Stories</a>
+
+            <?php if (isDonor()): ?>
+                <a href="<?php echo baseUrl(); ?>/find_donors.php" class="<?php echo isActivePage('find_donors.php') ? 'active' : ''; ?>">Find Donors</a>
+                <a href="<?php echo baseUrl(); ?>/blood_banks.php" class="<?php echo isActivePage('blood_banks.php') ? 'active' : ''; ?>">Blood Banks</a>
+                <a href="<?php echo baseUrl(); ?>/eligibility.php" class="<?php echo isActivePage('eligibility.php') ? 'active' : ''; ?>">Eligibility</a>
+                <a href="<?php echo baseUrl(); ?>/emergency.php" class="<?php echo isActivePage('emergency.php') ? 'active' : ''; ?>">Emergency SOS</a>
+                <a href="<?php echo baseUrl(); ?>/leaderboard.php" class="<?php echo isActivePage('leaderboard.php') ? 'active' : ''; ?>">Leaderboard</a>
+                <a href="<?php echo baseUrl(); ?>/testimonials.php" class="<?php echo isActivePage('testimonials.php') ? 'active' : ''; ?>">Stories</a>
+            <?php elseif (isHospital()): ?>
+                <a href="<?php echo baseUrl(); ?>/find_donors.php" class="<?php echo isActivePage('find_donors.php') ? 'active' : ''; ?>">Find Donors</a>
+                <a href="<?php echo baseUrl(); ?>/blood_banks.php" class="<?php echo isActivePage('blood_banks.php') ? 'active' : ''; ?>">Blood Banks</a>
+                <a href="<?php echo baseUrl(); ?>/emergency.php" class="<?php echo isActivePage('emergency.php') ? 'active' : ''; ?>">Emergency SOS</a>
+            <?php elseif (!isLoggedIn()): ?>
+                <a href="<?php echo baseUrl(); ?>/testimonials.php" class="<?php echo isActivePage('testimonials.php') ? 'active' : ''; ?>">Stories</a>
+            <?php endif; ?>
+
             <?php if (isLoggedIn()): ?>
-                <?php 
-                    $unreadCount = getUnreadMessageCount($pdo, $_SESSION['user_id']); 
-                ?>
+                <?php $unreadCount = getUnreadMessageCount($pdo, $_SESSION['user_id']); ?>
                 <a href="<?php echo baseUrl(); ?>/messages.php" class="<?php echo isActivePage('messages.php') ? 'active' : ''; ?>">
-                    Messages 
-                    <?php if ($unreadCount > 0): ?>
-                        <span class="badge-unread"><?php echo $unreadCount; ?></span>
-                    <?php endif; ?>
+                    Messages<?php if ($unreadCount > 0): ?> <span class="badge-unread"><?php echo $unreadCount; ?></span><?php endif; ?>
                 </a>
                 <?php if (isAdmin()): ?>
-                    <a href="<?php echo baseUrl(); ?>/admin/dashboard.php" class="<?php echo isActivePage('admin') ? 'active' : ''; ?>">Admin</a>
+                    <a href="<?php echo baseUrl(); ?>/admin/dashboard.php" class="nav-admin<?php echo isActivePage('dashboard.php') ? ' active' : ''; ?>">Admin</a>
                 <?php elseif (isDonor()): ?>
-                    <a href="<?php echo baseUrl(); ?>/donor/dashboard.php" class="<?php echo isActivePage('donor') ? 'active' : ''; ?>">Dashboard</a>
+                    <a href="<?php echo baseUrl(); ?>/donor/dashboard.php" class="<?php echo isActivePage('donor') ? 'active' : ''; ?>">My Dashboard</a>
                 <?php elseif (isHospital()): ?>
-                    <a href="<?php echo baseUrl(); ?>/hospital/dashboard.php" class="<?php echo isActivePage('hospital') ? 'active' : ''; ?>">Dashboard</a>
+                    <a href="<?php echo baseUrl(); ?>/hospital/dashboard.php" class="<?php echo isActivePage('hospital') ? 'active' : ''; ?>">My Dashboard</a>
                 <?php endif; ?>
                 <a href="<?php echo baseUrl(); ?>/logout.php">Logout</a>
             <?php else: ?>

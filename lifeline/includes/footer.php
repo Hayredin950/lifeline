@@ -9,19 +9,53 @@
             <div>
                 <h4>Quick Links</h4>
                 <ul>
-                    <li><a href="<?php echo baseUrl(); ?>/find_donors.php">Find Donors</a></li>
-                    <li><a href="<?php echo baseUrl(); ?>/blood_banks.php">Blood Banks</a></li>
-                    <li><a href="<?php echo baseUrl(); ?>/eligibility.php">Eligibility Check</a></li>
-                    <li><a href="<?php echo baseUrl(); ?>/emergency.php">Emergency SOS</a></li>
-                    <li><a href="<?php echo baseUrl(); ?>/leaderboard.php">Leaderboard</a></li>
+                    <?php if (isAdmin()): ?>
+                        <li><a href="<?php echo baseUrl(); ?>/admin/dashboard.php">Admin Dashboard</a></li>
+                        <li><a href="<?php echo baseUrl(); ?>/admin/manage_requests.php">Manage Requests</a></li>
+                        <li><a href="<?php echo baseUrl(); ?>/admin/activity.php">Activity &amp; Audit</a></li>
+                        <li><a href="<?php echo baseUrl(); ?>/admin/slo_dashboard.php">SLO Dashboard</a></li>
+                        <li><a href="<?php echo baseUrl(); ?>/admin/analytics.php">Analytics</a></li>
+                    <?php elseif (isHospital()): ?>
+                        <li><a href="<?php echo baseUrl(); ?>/hospital/dashboard.php">My Dashboard</a></li>
+                        <li><a href="<?php echo baseUrl(); ?>/find_donors.php">Find Donors</a></li>
+                        <li><a href="<?php echo baseUrl(); ?>/blood_banks.php">Blood Banks</a></li>
+                        <li><a href="<?php echo baseUrl(); ?>/emergency.php">Emergency SOS</a></li>
+                    <?php elseif (isDonor()): ?>
+                        <li><a href="<?php echo baseUrl(); ?>/find_donors.php">Find Donors</a></li>
+                        <li><a href="<?php echo baseUrl(); ?>/blood_banks.php">Blood Banks</a></li>
+                        <li><a href="<?php echo baseUrl(); ?>/eligibility.php">Eligibility Check</a></li>
+                        <li><a href="<?php echo baseUrl(); ?>/emergency.php">Emergency SOS</a></li>
+                        <li><a href="<?php echo baseUrl(); ?>/leaderboard.php">Leaderboard</a></li>
+                    <?php else: ?>
+                        <li><a href="<?php echo baseUrl(); ?>/testimonials.php">Stories</a></li>
+                        <li><a href="<?php echo baseUrl(); ?>/login.php">Login to Find Donors</a></li>
+                        <li><a href="<?php echo baseUrl(); ?>/register.php">Become a Donor</a></li>
+                    <?php endif; ?>
                 </ul>
             </div>
             <div>
                 <h4>Account</h4>
                 <ul>
-                    <li><a href="<?php echo baseUrl(); ?>/login.php">Login</a></li>
-                    <li><a href="<?php echo baseUrl(); ?>/register.php">Register</a></li>
-                    <li><a href="<?php echo baseUrl(); ?>/forgot_password.php">Forgot Password</a></li>
+                    <?php if (isAdmin()): ?>
+                        <li><a href="<?php echo baseUrl(); ?>/admin/dashboard.php">Admin Panel</a></li>
+                        <li><a href="<?php echo baseUrl(); ?>/messages.php">Messages</a></li>
+                        <li><a href="<?php echo baseUrl(); ?>/auth/setup_2fa.php">Two-Factor Auth</a></li>
+                        <li><a href="<?php echo baseUrl(); ?>/logout.php">Logout</a></li>
+                    <?php elseif (isDonor()): ?>
+                        <li><a href="<?php echo baseUrl(); ?>/donor/dashboard.php">My Dashboard</a></li>
+                        <li><a href="<?php echo baseUrl(); ?>/donor/edit_profile.php">My Profile</a></li>
+                        <li><a href="<?php echo baseUrl(); ?>/messages.php">Messages</a></li>
+                        <li><a href="<?php echo baseUrl(); ?>/logout.php">Logout</a></li>
+                    <?php elseif (isHospital()): ?>
+                        <li><a href="<?php echo baseUrl(); ?>/hospital/dashboard.php">My Dashboard</a></li>
+                        <li><a href="<?php echo baseUrl(); ?>/hospital/edit_profile.php">Hospital Profile</a></li>
+                        <li><a href="<?php echo baseUrl(); ?>/messages.php">Messages</a></li>
+                        <li><a href="<?php echo baseUrl(); ?>/logout.php">Logout</a></li>
+                    <?php else: ?>
+                        <li><a href="<?php echo baseUrl(); ?>/login.php">Login</a></li>
+                        <li><a href="<?php echo baseUrl(); ?>/register.php">Register</a></li>
+                        <li><a href="<?php echo baseUrl(); ?>/forgot_password.php">Forgot Password</a></li>
+                    <?php endif; ?>
                 </ul>
             </div>
             <div>

@@ -1,5 +1,6 @@
 <?php
 require_once 'includes/functions.php';
+requireAuth();
 $pageTitle = 'Blood Banks';
 
 $name = trim($_GET['name'] ?? '');

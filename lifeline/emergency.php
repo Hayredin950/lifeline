@@ -1,5 +1,6 @@
 <?php
 require_once 'includes/functions.php';
+requireAuth();
 $pageTitle = 'Emergency SOS';
 
 // Issue a fresh arithmetic CAPTCHA (no external dependency — stack-compliant).

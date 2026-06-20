@@ -1,5 +1,6 @@
 <?php
 require_once 'includes/functions.php';
+requireAuth();
 $pageTitle = 'Donor Leaderboard';
 
 // Get leaderboard data

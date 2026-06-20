@@ -1,6 +1,7 @@
 <?php
 $pageTitle = 'Find Blood Donors';
 require_once 'includes/functions.php';
+requireAuth();
 
 $bloodType     = $_GET['blood_type'] ?? '';
 $city          = trim($_GET['city'] ?? '');
@@ -11,6 +12,36 @@ $componentCode = preg_replace('/[^a-z_]/', '', $_GET['component'] ?? '');
 $searchLat = null;
 $searchLng = null;
 $geoSearch = false;
+
+// Pre-fill city/state from the logged-in user's profile when no search has been submitted yet.
+$profileCity  = '';
+$profileState = '';
+if (isLoggedIn() && !isset($_GET['search'])) {
+    $uid = (int)($_SESSION['user_id'] ?? 0);
+    if (isDonor()) {
+        $row = $pdo->prepare("SELECT city, state FROM donor_profiles WHERE user_id = ? LIMIT 1");
+        $row->execute([$uid]);
+        $row = $row->fetch();
+    } elseif (isHospital()) {
+        $row = $pdo->prepare("SELECT city, state FROM hospital_profiles WHERE user_id = ? LIMIT 1");
+        $row->execute([$uid]);
+        $row = $row->fetch();
+    } else {
+        $row = false;
+    }
+    if ($row) {
+        $profileCity  = $row['city']  ?? '';
+        $profileState = $row['state'] ?? '';
+    }
+}
+
+// Use profile values as defaults only when the user hasn't typed anything yet.
+if ($city === '' && $profileCity !== '') {
+    $city = $profileCity;
+}
+if ($state === '' && $profileState !== '') {
+    $state = $profileState;
+}
 
 $results  = [];
 $hasSearch = isset($_GET['search']) || ($bloodType || $city || $state);
@@ -154,6 +185,7 @@ include 'includes/header.php';
                     <option value="<?php echo $r; ?>" <?php echo $radius === $r ? 'selected' : ''; ?>><?php echo $r; ?> km</option>
                 <?php endforeach; ?>
             </select>
+            <span class="fs-75 text-muted mt-4 d-block">Requires City or State</span>
         </div>
         <div class="form-group flex-05 minw-120 mb-0 pt-25">
             <label class="flex items-center gap-8 cursor-pointer">
