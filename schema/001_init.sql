@@ -318,14 +318,23 @@ VALUES
   (6,'Mekelle University Hospital Blood Bank','Mekelle, Tigray','Mekelle','Tigray','+251 34 441 6680',NULL,NULL,'8am-6pm',0,NULL,NULL,CURRENT_TIMESTAMP),
   (7,'Hawassa University Comprehensive Specialized Hospital Blood Bank','Hawassa, SNNP','Hawassa','SNNP','+251 46 220 9038',NULL,NULL,'8am-6pm',0,NULL,NULL,CURRENT_TIMESTAMP),
   (8,'Jimma University Medical Centre Blood Bank','Jimma, Oromia','Jimma','Oromia','+251 47 111 4100',NULL,NULL,'8am-6pm',0,NULL,NULL,CURRENT_TIMESTAMP)
-ON DUPLICATE KEY UPDATE `name` = VALUES(`name`);
+ON DUPLICATE KEY UPDATE
+  `name`            = VALUES(`name`),
+  `address`         = VALUES(`address`),
+  `city`            = VALUES(`city`),
+  `state`           = VALUES(`state`),
+  `phone`           = VALUES(`phone`),
+  `working_hours`   = VALUES(`working_hours`),
+  `has_24h_service` = VALUES(`has_24h_service`);
 
 INSERT INTO `testimonials` (`id`,`donor_id`,`recipient_name`,`story`,`rating`,`is_approved`,`created_at`)
 VALUES
   (1,NULL,'Abebe Girma''s Family','My father needed O- blood urgently after his accident. Within 2 hours, LifeLine matched us with a donor in Addis Ababa. He survived because of this platform. Forever grateful.',5,1,CURRENT_TIMESTAMP),
   (2,NULL,'Dr. Tigist Haile','As a hospital administrator at Tikur Anbessa Hospital, LifeLine has transformed how we handle emergency blood needs. The matching system is incredibly fast and reliable.',5,1,CURRENT_TIMESTAMP),
   (3,NULL,'Meron Tadesse','I donated blood for the first time through LifeLine. The process was so simple and knowing I helped save a life is the best feeling in the world.',5,1,CURRENT_TIMESTAMP)
-ON DUPLICATE KEY UPDATE `story` = VALUES(`story`);
+ON DUPLICATE KEY UPDATE
+  `recipient_name` = VALUES(`recipient_name`),
+  `story`          = VALUES(`story`);
 
 -- Record this migration
 INSERT INTO `schema_migrations` (`version`) VALUES ('001_init')
