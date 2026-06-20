@@ -89,7 +89,7 @@ trust-ready, scalable, billion-dollar platform. Check a box (`[x]`) the moment a
 - [ ] Redis page/fragment cache for homepage/leaderboard/directory — HM · NFR-01
 - [x] Versioned REST API `/api/v1` + OpenAPI 3.1 + contract tests — BT · Doc 06 §4 *(`schema/009_api_keys.sql` + Bearer auth + named scopes + DB rate limiting; endpoints: donors, blood_requests (GET+POST), hospitals, blood_banks; `docs/openapi.yaml` 3.1 spec; `admin/api_keys.php` key management)*
 - [x] PWA: manifest + service worker (install, offline shell, Web Push) — FR · Doc 08 §4 *(`manifest.json` name/icons/shortcuts/theme; `sw.js` Cache-First shell + Network-First navigation + API passthrough; `offline.php` fallback; placeholder icons 192+512 px; SW registered in footer.php; manifest linked in header.php)*
-- [ ] 2FA (TOTP/SMS) for hospital & admin accounts — SEC · FR-09
+- [x] 2FA (TOTP/SMS) for hospital & admin accounts — SEC · FR-09 *(`schema/010_totp.sql` adds totp_secret/enabled/backup_codes; `includes/totp.php` pure-PHP RFC 6238; `auth/setup_2fa.php` enable/disable + backup codes; `auth/verify_2fa.php` challenge page; login.php intercept for hospital+admin; 2FA link in hospital+admin dashboards)*
 - [ ] Hospital verification workflow with evidence (`is_verified`) — PO/SEC · FR-50
 - [ ] Hospital/bank analytics dashboards (demand, time-to-fill, fulfillment rate) — BM · Doc 13 §3
 - [ ] i18n: externalize strings; English + ≥1 regional language — LA · NFR-13

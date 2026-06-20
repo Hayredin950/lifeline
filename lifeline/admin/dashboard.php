@@ -65,6 +65,16 @@ include '../includes/header.php';
         <p>Review and approve donor stories before they are published.</p>
         <span class="btn mt-10">Open</span>
     </a>
+    <a href="<?php echo baseUrl(); ?>/admin/api_keys.php" class="card no-underline text-inherit">
+        <h2>API Keys</h2>
+        <p>Issue, view, and revoke keys for the REST API /api/v1.</p>
+        <span class="btn mt-10">Open</span>
+    </a>
+    <a href="<?php echo baseUrl(); ?>/auth/setup_2fa.php" class="card no-underline text-inherit">
+        <h2>Two-Factor Auth</h2>
+        <p>Enable or manage TOTP 2FA for your admin account.</p>
+        <span class="btn mt-10">Manage 2FA</span>
+    </a>
 </div>
 
 <?php include '../includes/footer.php'; ?>

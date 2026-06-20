@@ -2,8 +2,11 @@
 require_once '../includes/functions.php';
 requireHospital();
 
-$userId = $_SESSION['user_id'];
+$userId  = $_SESSION['user_id'];
 $profile = getHospitalProfile($pdo, $userId);
+$currentUser = $pdo->prepare("SELECT totp_enabled FROM users WHERE id = ?");
+$currentUser->execute([$userId]);
+$totpEnabled = (bool)($currentUser->fetchColumn() ?? false);
 
 $stmt = $pdo->prepare("
     SELECT * FROM blood_requests
@@ -112,6 +115,9 @@ include '../includes/header.php';
                 <a href="<?php echo baseUrl(); ?>/find_donors.php" class="btn btn-small btn-secondary w-full text-center">Find Donors</a>
                 <a href="<?php echo baseUrl(); ?>/blood_banks.php" class="btn btn-small btn-secondary w-full text-center">Nearby Blood Banks</a>
                 <a href="<?php echo baseUrl(); ?>/messages.php" class="btn btn-small btn-secondary w-full text-center">Messages</a>
+                <a href="<?php echo baseUrl(); ?>/auth/setup_2fa.php" class="btn btn-small btn-secondary w-full text-center">
+                    <?php echo $totpEnabled ? '2FA Active' : 'Enable 2FA'; ?>
+                </a>
             </div>
         </div>
     </div>
