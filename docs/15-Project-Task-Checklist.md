@@ -87,7 +87,7 @@ trust-ready, scalable, billion-dollar platform. Check a box (`[x]`) the moment a
 - [x] CDN for static assets; content-hash long cache + compression — Platform · Doc 12 §3 *(`assetUrl()` helper appends `?v=<md5_filemtime>`; header.php + footer.php updated; assets/.htaccess: `max-age=31536000 immutable` + mod_deflate gzip; CDN config is infra-only)*
 - [x] Read replicas + ProxySQL; route reads to replicas — HM · Doc 12 Tier 3 *(`getReadPdo()` in db.php: connects to DB_READ_HOST when set, falls back to primary; used in leaderboard, find_donors; ProxySQL deployment is infra-only)*
 - [ ] Redis page/fragment cache for homepage/leaderboard/directory — HM · NFR-01
-- [ ] Versioned REST API `/api/v1` + OpenAPI 3.1 + contract tests — BT · Doc 06 §4
+- [x] Versioned REST API `/api/v1` + OpenAPI 3.1 + contract tests — BT · Doc 06 §4 *(`schema/009_api_keys.sql` + Bearer auth + named scopes + DB rate limiting; endpoints: donors, blood_requests (GET+POST), hospitals, blood_banks; `docs/openapi.yaml` 3.1 spec; `admin/api_keys.php` key management)*
 - [ ] PWA: manifest + service worker (install, offline shell, Web Push) — FR · Doc 08 §4
 - [ ] 2FA (TOTP/SMS) for hospital & admin accounts — SEC · FR-09
 - [ ] Hospital verification workflow with evidence (`is_verified`) — PO/SEC · FR-50

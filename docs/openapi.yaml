@@ -1,0 +1,220 @@
+openapi: 3.1.0
+info:
+  title: LifeLine Blood Network API
+  version: "1"
+  description: |
+    REST API for the LifeLine Blood Network platform.
+    All endpoints require an API key passed as `Authorization: Bearer <key>`.
+    Keys are issued via the admin panel and carry named scopes.
+  contact:
+    name: LifeLine Blood Network
+
+servers:
+  - url: http://127.0.0.1:8000/api/v1
+    description: Local development
+  - url: https://api.lifelineblood.network/v1
+    description: Production
+
+security:
+  - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: SHA-256–hashed API key stored in api_keys table
+
+  schemas:
+    Donor:
+      type: object
+      properties:
+        id:           { type: integer }
+        full_name:    { type: string }
+        blood_type:   { type: string, enum: [A+, A-, B+, B-, AB+, AB-, O+, O-] }
+        city:         { type: string }
+        state:        { type: string }
+        country:      { type: string }
+        is_available: { type: boolean }
+        tier:         { type: string, enum: [bronze, silver, gold, platinum] }
+        total_donations: { type: integer }
+        donation_points: { type: integer }
+
+    BloodRequest:
+      type: object
+      properties:
+        id:                 { type: integer }
+        patient_blood_type: { type: string, enum: [A+, A-, B+, B-, AB+, AB-, O+, O-] }
+        units_needed:       { type: integer, minimum: 1, maximum: 100 }
+        urgency:            { type: string, enum: [routine, urgent, critical] }
+        status:             { type: string, enum: [open, fulfilled, cancelled] }
+        required_date:      { type: string, format: date, nullable: true }
+        created_at:         { type: string, format: date-time }
+        hospital_name:      { type: string }
+        city:               { type: string }
+        state:              { type: string }
+
+    Hospital:
+      type: object
+      properties:
+        id:            { type: integer }
+        hospital_name: { type: string }
+        city:          { type: string }
+        state:         { type: string }
+        country:       { type: string }
+        is_verified:   { type: boolean }
+
+    Meta:
+      type: object
+      properties:
+        total:    { type: integer }
+        page:     { type: integer }
+        per_page: { type: integer }
+        pages:    { type: integer }
+
+    Error:
+      type: object
+      properties:
+        error: { type: string }
+        code:  { type: integer }
+
+paths:
+  /donors:
+    get:
+      summary: List donors
+      operationId: listDonors
+      security: [{ bearerAuth: [] }]
+      tags: [Donors]
+      parameters:
+        - { name: blood_type, in: query, schema: { type: string } }
+        - { name: city,       in: query, schema: { type: string } }
+        - { name: state,      in: query, schema: { type: string } }
+        - { name: country,    in: query, schema: { type: string } }
+        - { name: available,  in: query, schema: { type: boolean }, description: "Only return currently eligible donors" }
+        - { name: page,       in: query, schema: { type: integer, default: 1 } }
+        - { name: per_page,   in: query, schema: { type: integer, default: 20, maximum: 100 } }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { type: array, items: { $ref: '#/components/schemas/Donor' } }
+                  meta: { $ref: '#/components/schemas/Meta' }
+        "401": { description: Unauthorized, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        "429": { description: Rate limit exceeded }
+
+  /donors/{id}:
+    get:
+      summary: Get donor by ID
+      operationId: getDonor
+      tags: [Donors]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/Donor' }
+        "404": { description: Not found }
+
+  /blood_requests:
+    get:
+      summary: List blood requests
+      operationId: listBloodRequests
+      tags: [Blood Requests]
+      parameters:
+        - { name: status,     in: query, schema: { type: string, default: open } }
+        - { name: blood_type, in: query, schema: { type: string } }
+        - { name: urgency,    in: query, schema: { type: string } }
+        - { name: page,       in: query, schema: { type: integer, default: 1 } }
+        - { name: per_page,   in: query, schema: { type: integer, default: 20 } }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { type: array, items: { $ref: '#/components/schemas/BloodRequest' } }
+                  meta: { $ref: '#/components/schemas/Meta' }
+
+    post:
+      summary: Create a blood request
+      operationId: createBloodRequest
+      tags: [Blood Requests]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [patient_blood_type, units_needed, urgency]
+              properties:
+                patient_blood_type: { type: string }
+                units_needed:       { type: integer, minimum: 1, maximum: 100 }
+                urgency:            { type: string, enum: [routine, urgent, critical] }
+                required_date:      { type: string, format: date }
+                notes:              { type: string, maxLength: 1000 }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      id:     { type: integer }
+                      status: { type: string }
+        "422": { description: Validation error }
+        "403": { description: Forbidden — key not linked to a hospital }
+
+  /hospitals:
+    get:
+      summary: List hospitals
+      operationId: listHospitals
+      tags: [Hospitals]
+      parameters:
+        - { name: verified,  in: query, schema: { type: boolean } }
+        - { name: city,      in: query, schema: { type: string } }
+        - { name: state,     in: query, schema: { type: string } }
+        - { name: page,      in: query, schema: { type: integer, default: 1 } }
+        - { name: per_page,  in: query, schema: { type: integer, default: 20 } }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { type: array, items: { $ref: '#/components/schemas/Hospital' } }
+                  meta: { $ref: '#/components/schemas/Meta' }
+
+  /blood_banks:
+    get:
+      summary: List blood banks
+      operationId: listBloodBanks
+      tags: [Blood Banks]
+      parameters:
+        - { name: city,       in: query, schema: { type: string } }
+        - { name: state,      in: query, schema: { type: string } }
+        - { name: blood_type, in: query, schema: { type: string } }
+        - { name: page,       in: query, schema: { type: integer, default: 1 } }
+        - { name: per_page,   in: query, schema: { type: integer, default: 20 } }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { type: array, items: { type: object } }
+                  meta: { $ref: '#/components/schemas/Meta' }
