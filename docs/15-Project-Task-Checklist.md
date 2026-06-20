@@ -73,7 +73,7 @@ trust-ready, scalable, billion-dollar platform. Check a box (`[x]`) the moment a
 - [x] Notification preferences + unsubscribe center — EM · FR-32 *(`schema/007_notif_prefs.sql` adds `email_notif_prefs` JSON + `unsubscribe_token`; `donor/notification_prefs.php` pref page; `unsubscribe.php` one-click unsubscribe; worker `shouldDeliver()` check; unsubscribe footer link in blood-request emails)*
 
 ### 1.4 Compliance baseline
-- [ ] Consent capture + versioning at registration — SEC · Doc 07 §6
+- [x] Consent capture + versioning at registration — SEC · Doc 07 §6 *(`schema/008_consent_log.sql` consent_log table; `TERMS_VERSION` constant in config.php; required checkbox in register.php; consent row inserted with IP + UA + version immediately after user creation)*
 - [ ] Soft-delete (`deleted_at`) + retention/purge job — HM · FR-49
 - [ ] DSAR export + erasure endpoints — SEC · Doc 07 §6
 - [ ] **P1 gate:** real city fulfillment; geo matching; SSE live; consent live; Tier 0–1 infra stable — all

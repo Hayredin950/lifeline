@@ -10,11 +10,16 @@ if (!defined('APP_ROOT')) {
 }
 
 // Single source of truth for the whole-blood donation cool-off period (DEF-01).
-// Aligned to India NBTC guidance of ~3 months between whole-blood donations.
+// Aligned to Ethiopian Ministry of Health guidance of ~3 months between whole-blood donations.
 // Defined here (the common ancestor of functions.php and email_service.php) so
 // every consumer sees the same number and it can never drift apart again.
 if (!defined('DONATION_COOLOFF_DAYS')) {
     define('DONATION_COOLOFF_DAYS', 90);
+}
+
+// Bump this string whenever Terms or Privacy Policy materially change (FR-49).
+if (!defined('TERMS_VERSION')) {
+    define('TERMS_VERSION', '1.0');
 }
 
 class Config {

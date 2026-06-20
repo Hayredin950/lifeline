@@ -42,8 +42,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $errors[] = 'Please select a valid blood type.';
         }
         if ($phone !== '' && !validatePhone($phone)) {
-            $errors[] = 'Please enter a valid phone number (e.g. +91 98765 43210).';
+            $errors[] = 'Please enter a valid phone number (e.g. +251 91 234 5678).';
         }
+    }
+
+    // Consent to terms is mandatory (FR-49 / Doc 07 §6).
+    if (!isset($_POST['consent_terms'])) {
+        $errors[] = 'You must agree to the Terms of Service and Privacy Policy to register.';
     }
 
     if (empty($errors)) {
@@ -81,7 +86,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 trim($_POST['address'] ?? ''),
                 trim($_POST['city'] ?? ''),
                 trim($_POST['state'] ?? ''),
-                trim($_POST['country'] ?? 'India'),
+                trim($_POST['country'] ?? 'Ethiopia'),
                 $_POST['date_of_birth'] ?: null,
                 $_POST['gender'] ?? null,
                 $lat,
@@ -100,12 +105,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 trim($_POST['address'] ?? ''),
                 trim($_POST['city'] ?? ''),
                 trim($_POST['state'] ?? ''),
-                trim($_POST['country'] ?? 'India'),
+                trim($_POST['country'] ?? 'Ethiopia'),
                 trim($_POST['license_number'] ?? ''),
                 $lat,
                 $lng
             ]);
         }
+
+        // Record consent (FR-49 / Doc 07 §6) — immutable audit trail.
+        $pdo->prepare("
+            INSERT INTO consent_log (user_id, terms_version, ip_address, user_agent)
+            VALUES (?, ?, ?, ?)
+        ")->execute([
+            $userId,
+            TERMS_VERSION,
+            $_SERVER['REMOTE_ADDR'] ?? null,
+            isset($_SERVER['HTTP_USER_AGENT']) ? substr($_SERVER['HTTP_USER_AGENT'], 0, 500) : null,
+        ]);
 
         // Auto-login
         $_SESSION['user_id'] = $userId;
@@ -181,7 +197,7 @@ include 'includes/header.php';
         </div>
         <div class="form-group">
             <label for="phone">Phone Number</label>
-            <input type="text" id="phone" name="phone" value="<?php echo old('phone'); ?>" required placeholder="e.g. +91 98765 43210">
+            <input type="text" id="phone" name="phone" value="<?php echo old('phone'); ?>" required placeholder="e.g. +251 91 234 5678">
         </div>
         <div class="form-group">
             <label for="blood_type">Blood Type</label>
@@ -219,7 +235,7 @@ include 'includes/header.php';
         </div>
         <div class="form-group">
             <label for="country">Country</label>
-            <input type="text" id="country" name="country" value="<?php echo old('country', 'India'); ?>">
+            <input type="text" id="country" name="country" value="<?php echo old('country', 'Ethiopia'); ?>">
         </div>
         <?php elseif ($role === 'hospital'): ?>
         <div class="form-group">
@@ -248,9 +264,20 @@ include 'includes/header.php';
         </div>
         <div class="form-group">
             <label for="country">Country</label>
-            <input type="text" id="country" name="country" value="<?php echo old('country', 'India'); ?>" required>
+            <input type="text" id="country" name="country" value="<?php echo old('country', 'Ethiopia'); ?>" required>
         </div>
         <?php endif; ?>
+
+        <div class="form-group mt-20">
+            <label class="flex items-center gap-10">
+                <input type="checkbox" name="consent_terms" value="1" required
+                       <?php echo isset($_POST['consent_terms']) ? 'checked' : ''; ?>>
+                <span>
+                    I agree to the <strong>Terms of Service</strong> and <strong>Privacy Policy</strong>
+                    <span class="fs-80 text-muted">(v<?php echo TERMS_VERSION; ?>)</span>
+                </span>
+            </label>
+        </div>
 
         <button type="submit" class="btn w-full">Create Account</button>
         <p class="text-center mt-16"><a href="<?php echo baseUrl(); ?>/register.php">&larr; Back to selection</a></p>
