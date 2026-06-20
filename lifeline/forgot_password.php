@@ -35,9 +35,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ");
         $stmt->execute([$email, $token, $expiresAt]);
         
-        // Send email
-        $resetUrl = Config::get('APP_URL') . '/reset_password.php?token=' . $token;
-        EmailService::sendPasswordReset($email, $resetUrl);
+        // Queue password-reset email asynchronously (NFR-02).
+        $resetUrl = fullBaseUrl() . '/reset_password.php?token=' . $token;
+        enqueueNotification($pdo, 'password_reset', $email, ['reset_url' => $resetUrl]);
     }
     
     // Always show success message to prevent email enumeration

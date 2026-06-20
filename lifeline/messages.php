@@ -625,15 +625,75 @@ jQuery(function ($) {
         }
     });
 
-    // Poll every 3s, but pause when the tab is hidden (saves load — Doc 12).
+    // ---------------------------------------------------------------------------
+    // Transport: SSE (FR-37) with AJAX poll fallback for browsers / proxies that
+    // don't support EventSource or drop the connection.
+    // ---------------------------------------------------------------------------
+
+    var sseActive = false;
+    var sseSource = null;
+    var sinceMs = 0;   // epoch-ms of newest locally-known message; advanced by SSE events
+
+    function applyNewMessages(msgs) {
+        if (!msgs || !msgs.length) return;
+        msgs.forEach(function (msg) {
+            if (!$container.find('[data-id="' + msg.id + '"]').length) {
+                $container.append(renderBubble(msg));
+                scrollToBottom();
+                lastMessageCount++;
+            }
+            if (msg.created_ms > sinceMs) sinceMs = msg.created_ms;
+        });
+    }
+
+    function openSSE() {
+        if (!window.EventSource) return false;   // browser doesn't support SSE
+        sseSource = new EventSource(base + '/api/stream.php?conversation=' + activeConversation + '&since=' + sinceMs);
+        sseActive = true;
+
+        sseSource.addEventListener('messages', function (e) {
+            try {
+                var data = JSON.parse(e.data);
+                if (data.messages) applyNewMessages(data.messages);
+            } catch (ex) {}
+        });
+
+        sseSource.addEventListener('close', function () {
+            // Server closed the 30-s window; reconnect with updated `since`.
+            sseSource.close();
+            sseSource = null;
+            openSSE();
+        });
+
+        sseSource.onerror = function () {
+            // SSE failed (proxy stripped, server error, etc.) — fall back to poll.
+            sseSource.close();
+            sseSource = null;
+            sseActive = false;
+            startPolling();
+        };
+        return true;
+    }
+
+    // Poll every 3 s — used when SSE is unavailable or as the hidden-tab throttle.
     function startPolling() { if (!pollTimer) pollTimer = setInterval(loadMessages, 3000); }
-    function stopPolling() { clearInterval(pollTimer); pollTimer = null; }
+    function stopPolling()  { clearInterval(pollTimer); pollTimer = null; }
+
+    // Pause SSE (and poll) when the tab is hidden; resume on visibility (Doc 12).
     $(document).on('visibilitychange', function () {
-        if (document.hidden) { stopPolling(); } else { loadMessages(); startPolling(); }
+        if (document.hidden) {
+            if (sseSource) { sseSource.close(); sseSource = null; }
+            stopPolling();
+        } else {
+            loadMessages();   // catch up immediately
+            if (!openSSE()) startPolling();
+        }
     });
 
-    loadMessages();
-    startPolling();
+    // Initial load, then open SSE (fall back to poll if unavailable).
+    loadMessages().done(function () {
+        if (!openSSE()) startPolling();
+    });
 });
 </script>
 

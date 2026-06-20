@@ -113,13 +113,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['email'] = $email;
         session_regenerate_id(true);
         
-        // Send welcome email
+        // Queue welcome email asynchronously (NFR-02) — off the request path.
         if ($role === 'donor') {
-            $donorName = trim($_POST['full_name'] ?? '');
-            EmailService::sendDonorWelcome($email, $donorName);
+            enqueueNotification($pdo, 'donor_welcome', $email, ['name' => trim($_POST['full_name'] ?? '')]);
         } else {
-            $hospitalName = trim($_POST['hospital_name'] ?? '');
-            EmailService::sendHospitalWelcome($email, $hospitalName);
+            enqueueNotification($pdo, 'hospital_welcome', $email, ['name' => trim($_POST['hospital_name'] ?? '')]);
         }
         
         setFlash('Registration successful! Welcome.', 'success');

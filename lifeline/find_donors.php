@@ -46,7 +46,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $hasSearch) {
 
     $showAll = isset($_GET['show_all']) && $_GET['show_all'] == '1';
     if (!$showAll) {
-        $sql .= " AND (dp.last_donation_date IS NULL OR dp.last_donation_date <= DATE_SUB(CURDATE(), INTERVAL 90 DAY))";
+        $sql .= " AND (dp.last_donation_date IS NULL OR dp.last_donation_date <= DATE_SUB(CURDATE(), INTERVAL ? DAY))";
+        $params[] = DONATION_COOLOFF_DAYS;
         $sql .= " AND dp.is_available = true";
     }
 
@@ -87,7 +88,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $hasSearch) {
         ";
         $fbParams = [];
         if (!$showAll) {
-            $fallbackSql .= " AND (dp.last_donation_date IS NULL OR dp.last_donation_date <= DATE_SUB(CURDATE(), INTERVAL 90 DAY)) AND dp.is_available = true";
+            $fallbackSql .= " AND (dp.last_donation_date IS NULL OR dp.last_donation_date <= DATE_SUB(CURDATE(), INTERVAL ? DAY)) AND dp.is_available = true";
+            $fbParams[] = DONATION_COOLOFF_DAYS;
         }
         if ($bloodType) {
             $fallbackSql .= " AND dp.blood_type = ?";

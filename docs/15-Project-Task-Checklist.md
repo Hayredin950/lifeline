@@ -57,10 +57,10 @@ trust-ready, scalable, billion-dollar platform. Check a box (`[x]`) the moment a
 *Exit: one city, anchor hospitals, real donations recorded; geo matching; near-real-time UX.*
 
 ### 1.1 Matching & geo
-- [ ] Geocode on profile save; backfill existing rows — LA · DEF-09 · FR-13
-- [ ] Store location as `POINT` + `SPATIAL` index; match via `ST_Distance_Sphere` — HM · FR-20
-- [ ] Rank matches by distance + recency + reliability (not city string) — EM · FR-20
-- [ ] Donor reliability score (confirmed/donated vs declined history) — EM · FR-20
+- [x] Geocode on profile save; backfill existing rows — LA · DEF-09 · FR-13 *(`geocodeIfChanged()` in functions.php; wired into register, donor/hospital/admin editors; `worker/backfill_geocode.php` for existing rows)*
+- [x] Store location as `POINT` + `SPATIAL` index; match via `ST_Distance_Sphere` — HM · FR-20 *(`schema/006_spatial_geo.sql`; generated POINT col + `sx_donor_geo`/`sx_hospital_geo` SPATIAL indexes)*
+- [x] Rank matches by distance + recency + reliability (not city string) — EM · FR-20 *(`find_donors.php` geo-search + radius filter; `request_matches.php` composite ORDER BY distance ASC, reliability DESC, recency DESC)*
+- [x] Donor reliability score (confirmed/donated vs declined history) — EM · FR-20 *(`getDonorReliability()` Laplace-smoothed score; surfaced as % in matches table)*
 
 ### 1.2 Async & messaging transport
 - [ ] Queue + worker pool for all transactional email + geocode — HM · NFR-02

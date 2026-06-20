@@ -3,8 +3,8 @@ require_once 'includes/functions.php';
 $pageTitle = 'Donor Leaderboard';
 
 // Get leaderboard data
-$period = $_GET['period'] ?? 'all';
-$limit = (int)($_GET['limit'] ?? 50);
+$period = in_array($_GET['period'] ?? '', ['month', 'year']) ? $_GET['period'] : 'all';
+$limit  = in_array((int)($_GET['limit'] ?? 50), [10, 25, 50, 100]) ? (int)$_GET['limit'] : 50;
 
 $dateFilter = '';
 if ($period === 'month') {

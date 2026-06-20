@@ -101,9 +101,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         setFlash('Donor record updated.', 'success');
         redirect(baseUrl() . '/admin/manage_donors.php');
     } elseif ($type === 'hospital') {
+        $newEmail = trim($_POST['email'] ?? '');
+        if (!filter_var($newEmail, FILTER_VALIDATE_EMAIL)) {
+            setFlash('Invalid email address.', 'danger');
+            redirect(baseUrl() . '/admin/edit_record.php?type=hospital&id=' . $id);
+        }
+        $taken = $pdo->prepare("SELECT id FROM users WHERE email = ? AND id != ?");
+        $taken->execute([$newEmail, $id]);
+        if ($taken->fetch()) {
+            setFlash('That email address is already used by another account.', 'danger');
+            redirect(baseUrl() . '/admin/edit_record.php?type=hospital&id=' . $id);
+        }
         $stmt = $pdo->prepare("UPDATE users SET email = ?, is_active = ? WHERE id = ?");
         $stmt->execute([
-            trim($_POST['email'] ?? ''),
+            $newEmail,
             isset($_POST['is_active']) ? 1 : 0,
             $id
         ]);

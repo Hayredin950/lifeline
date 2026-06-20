@@ -68,8 +68,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Get rate limit info for display
-$rateLimitInfo = getRateLimitRemaining($identifier);
+// Only show rate-limit info when we know the email (i.e. after a failed POST redirected here with flash).
+// On a plain GET the email is unknown, so identifier would be 'IP|' which is never incremented.
+$rateLimitInfo = null;
 
 include 'includes/header.php';
 ?>

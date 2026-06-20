@@ -61,23 +61,39 @@ function deliver(array $row): bool {
 $processed = 0;
 
 do {
-    // Claim a batch atomically so concurrent workers don't double-send.
-    $claim = $pdo->prepare("
-        UPDATE notification_queue
-        SET status = 'processing'
+    // Identify the exact IDs to claim before touching status, so concurrent workers
+    // each operate on a disjoint set and cannot double-send.
+    $idRows = $pdo->query("
+        SELECT id FROM notification_queue
         WHERE status = 'pending'
         ORDER BY id ASC
         LIMIT {$batchSize}
-    ");
-    $claim->execute();
-    $claimed = $claim->rowCount();
+    ")->fetchAll(PDO::FETCH_COLUMN);
 
-    if ($claimed === 0) {
+    if (empty($idRows)) {
         if ($loop) { sleep($sleepSecs); continue; }
         break;
     }
 
-    $rows = $pdo->query("SELECT * FROM notification_queue WHERE status = 'processing' ORDER BY id ASC")->fetchAll();
+    $placeholders = implode(',', array_fill(0, count($idRows), '?'));
+    $claimStmt = $pdo->prepare("
+        UPDATE notification_queue
+        SET status = 'processing'
+        WHERE id IN ($placeholders) AND status = 'pending'
+    ");
+    $claimStmt->execute($idRows);
+    $claimed = $claimStmt->rowCount();
+
+    if ($claimed === 0) {
+        // Another worker snatched all of them; try the next iteration.
+        if ($loop) { sleep($sleepSecs); continue; }
+        break;
+    }
+
+    // Fetch only the rows we actually claimed (not any other worker's batch).
+    $fetchStmt = $pdo->prepare("SELECT * FROM notification_queue WHERE id IN ($placeholders) AND status = 'processing' ORDER BY id ASC");
+    $fetchStmt->execute($idRows);
+    $rows = $fetchStmt->fetchAll();
 
     foreach ($rows as $row) {
         $ok = false;
