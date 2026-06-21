@@ -5,13 +5,8 @@ requireDonor();
 $userId  = $_SESSION['user_id'];
 $profile = getDonorProfile($pdo, $userId);
 
-// Only donors with at least one completed donation may submit a testimonial.
-$stmt = $pdo->prepare("
-    SELECT COUNT(*) FROM donor_matches
-    WHERE donor_id = ? AND status = 'donated'
-");
-$stmt->execute([$userId]);
-$donated = (int)$stmt->fetchColumn();
+// Donors with at least one recorded donation may submit a testimonial.
+$donated = (int)($profile['total_donations'] ?? 0);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     validateCsrf();

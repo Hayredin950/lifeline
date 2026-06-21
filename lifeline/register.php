@@ -273,7 +273,7 @@ include 'includes/header.php';
                 <input type="checkbox" name="consent_terms" value="1" required
                        <?php echo isset($_POST['consent_terms']) ? 'checked' : ''; ?>>
                 <span>I have read and agree to the
-                    <a href="<?php echo baseUrl(); ?>/terms.php" target="_blank">Terms of Service &amp; Privacy Policy</a>
+                    <a href="<?php echo baseUrl(); ?>/terms.php?role=<?php echo urlencode($role); ?>" target="_blank">Terms of Service &amp; Privacy Policy</a>
                     (v<?php echo htmlspecialchars(TERMS_VERSION); ?>)
                 </span>
             </label>

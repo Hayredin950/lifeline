@@ -18,7 +18,7 @@ if ($period === 'month') {
 $cacheKey    = 'leaderboard:' . $period . ':' . $limit;
 $cachedData  = cacheGet($cacheKey);
 
-if ($cachedData !== null) {
+if ($cachedData !== null && !empty($cachedData['leaderboard'])) {
     $leaderboard  = $cachedData['leaderboard'];
     $achievements = $cachedData['achievements'];
 } else {
@@ -44,20 +44,6 @@ if ($cachedData !== null) {
     ")->fetchAll();
 
     $achievements = [];
-    if (count($leaderboard) > 0) {
-        $userIds = array_column($leaderboard, 'user_id');
-        $in = implode(',', array_fill(0, count($userIds), '?'));
-        $stmt = $pdoR->prepare("
-            SELECT donor_id, COUNT(*) as count
-            FROM donor_matches
-            WHERE donor_id IN ($in) AND status = 'donated'
-            GROUP BY donor_id
-        ");
-        $stmt->execute($userIds);
-        foreach ($stmt->fetchAll() as $a) {
-            $achievements[$a['donor_id']] = $a['count'];
-        }
-    }
     cacheSet($cacheKey, ['leaderboard' => $leaderboard, 'achievements' => $achievements], 120);
 }
 
@@ -163,7 +149,7 @@ include 'includes/header.php';
                 <th class="hide-xs">Tier</th>
                 <th>Donations</th>
                 <th class="hide-mobile">Points</th>
-                <th class="hide-mobile">Badges</th>
+                <th class="hide-mobile">All-time</th>
                 <th class="hide-xs">Status</th>
             </tr>
         </thead>
@@ -199,7 +185,7 @@ include 'includes/header.php';
                 </td>
                 <td class="fw-700 text-primary fs-90"><?php echo (int)$d['period_donations']; ?></td>
                 <td class="hide-mobile text-crimson-light fw-700 fs-90"><?php echo (int)$d['donation_points']; ?></td>
-                <td class="hide-mobile text-muted fs-85"><?php echo $achievements[$d['user_id']] ?? 0; ?></td>
+                <td class="hide-mobile text-muted fs-85"><?php echo (int)$d['total_donations']; ?></td>
                 <td class="hide-xs">
                     <?php if ($d['last_donation'] && strtotime($d['last_donation']) > strtotime('-90 days')): ?>
                         <span class="badge badge-open py-2 px-8 fs-70">Active</span>

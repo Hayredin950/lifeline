@@ -38,10 +38,8 @@ $flash = getFlash();
             <a href="<?php echo baseUrl(); ?>/index.php" class="<?php echo isActivePage('index.php') ? 'active' : ''; ?>">Home</a>
 
             <?php if (isDonor()): ?>
-                <a href="<?php echo baseUrl(); ?>/find_donors.php" class="<?php echo isActivePage('find_donors.php') ? 'active' : ''; ?>">Find Donors</a>
                 <a href="<?php echo baseUrl(); ?>/blood_banks.php" class="<?php echo isActivePage('blood_banks.php') ? 'active' : ''; ?>">Blood Banks</a>
                 <a href="<?php echo baseUrl(); ?>/eligibility.php" class="<?php echo isActivePage('eligibility.php') ? 'active' : ''; ?>">Eligibility</a>
-                <a href="<?php echo baseUrl(); ?>/emergency.php" class="<?php echo isActivePage('emergency.php') ? 'active' : ''; ?>">Emergency SOS</a>
                 <a href="<?php echo baseUrl(); ?>/leaderboard.php" class="<?php echo isActivePage('leaderboard.php') ? 'active' : ''; ?>">Leaderboard</a>
                 <a href="<?php echo baseUrl(); ?>/testimonials.php" class="<?php echo isActivePage('testimonials.php') ? 'active' : ''; ?>">Stories</a>
             <?php elseif (isHospital()): ?>

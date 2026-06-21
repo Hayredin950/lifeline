@@ -1,6 +1,8 @@
 <?php
 require_once 'includes/functions.php';
 $pageTitle = 'Terms of Service & Privacy Policy';
+$fromRole = in_array($_GET['role'] ?? '', ['donor', 'hospital']) ? $_GET['role'] : null;
+$backUrl  = $fromRole ? baseUrl() . '/register.php?role=' . $fromRole : baseUrl() . '/register.php';
 include 'includes/header.php';
 ?>
 
@@ -94,7 +96,7 @@ include 'includes/header.php';
     </section>
 
     <div class="mt-32 pt-20" style="border-top: 1px solid var(--glass-border);">
-        <a href="<?php echo baseUrl(); ?>/register.php" class="btn btn-secondary">&larr; Back to Registration</a>
+        <a href="<?php echo htmlspecialchars($backUrl); ?>" class="btn btn-secondary">&larr; Back to Registration</a>
     </div>
 </div>
 

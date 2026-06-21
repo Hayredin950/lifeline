@@ -102,7 +102,7 @@ include 'includes/header.php';
     <h2>&#128221; Share Your Story</h2>
     <p>Did LifeLine help you or someone you love? Your story could inspire the next donor.</p>
     <?php if (isLoggedIn()): ?>
-        <a href="<?php echo baseUrl(); ?>/submit_story.php" class="btn btn-large">Share Your Story</a>
+        <a href="<?php echo baseUrl(); ?>/donor/submit_testimonial.php" class="btn btn-large">Share Your Story</a>
     <?php else: ?>
         <a href="<?php echo baseUrl(); ?>/register.php" class="btn btn-large">Join LifeLine to Share</a>
     <?php endif; ?>

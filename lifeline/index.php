@@ -26,7 +26,8 @@ $recentRequests = cacheGet('home:recent_requests');
 if ($recentRequests === null) {
     $pdoR = getReadPdo();
     $stmt = $pdoR->query("
-        SELECT br.*, hp.hospital_name
+        SELECT br.*, hp.hospital_name,
+               hp.city AS hospital_city, hp.state AS hospital_state
         FROM blood_requests br
         LEFT JOIN hospital_profiles hp ON br.hospital_id = hp.user_id
         WHERE br.status = 'open'
@@ -237,7 +238,7 @@ include 'includes/header.php';
                     <th>Blood Type</th>
                     <th>Units</th>
                     <th>Urgency</th>
-                    <th>Required By</th>
+                    <th>Posted</th>
                     <th>Location</th>
                     <th>Action</th>
                 </tr>
@@ -253,8 +254,11 @@ include 'includes/header.php';
                             <?php echo ucfirst($req['urgency']); ?>
                         </span>
                     </td>
-                    <td><?php echo $req['required_date'] ? htmlspecialchars($req['required_date']) : 'ASAP'; ?></td>
-                    <td><?php echo htmlspecialchars($req['city'] . ', ' . $req['state']); ?></td>
+                    <td><?php echo date('M j, Y', strtotime($req['created_at'])); ?></td>
+                    <td><?php
+                        $loc = trim(($req['hospital_city'] ?? '') . ', ' . ($req['hospital_state'] ?? ''), ', ');
+                        echo $loc ? htmlspecialchars($loc) : '—';
+                    ?></td>
                     <td><a href="<?php echo baseUrl(); ?>/view_request.php?id=<?php echo (int)$req['id']; ?>" class="btn btn-small">View</a></td>
                 </tr>
                 <?php endforeach; ?>
