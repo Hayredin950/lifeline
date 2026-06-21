@@ -4,8 +4,9 @@ requireAuth();
 $pageTitle = 'Donor Leaderboard';
 
 // Get leaderboard data
-$period = in_array($_GET['period'] ?? '', ['month', 'year']) ? $_GET['period'] : 'all';
-$limit  = in_array((int)($_GET['limit'] ?? 50), [10, 25, 50, 100]) ? (int)$_GET['limit'] : 50;
+$period   = in_array($_GET['period'] ?? '', ['month', 'year']) ? $_GET['period'] : 'all';
+$limitRaw = (int)($_GET['limit'] ?? 50);
+$limit    = in_array($limitRaw, [10, 25, 50, 100]) ? $limitRaw : 50;
 
 $dateFilter = '';
 if ($period === 'month') {

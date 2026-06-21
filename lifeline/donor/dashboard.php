@@ -192,13 +192,11 @@ include '../includes/header.php';
         <div class="card">
             <h3>Quick Actions</h3>
             <div class="flex flex-col gap-8 mt-10">
-                <a href="<?php echo baseUrl(); ?>/find_donors.php" class="btn btn-small btn-secondary w-full text-center">Find Other Donors</a>
                 <a href="<?php echo baseUrl(); ?>/eligibility.php" class="btn btn-small btn-secondary w-full text-center">Check Eligibility</a>
+                <a href="<?php echo baseUrl(); ?>/blood_banks.php" class="btn btn-small btn-secondary w-full text-center">Blood Banks</a>
                 <a href="<?php echo baseUrl(); ?>/leaderboard.php" class="btn btn-small btn-secondary w-full text-center">View Leaderboard</a>
+                <a href="<?php echo baseUrl(); ?>/donor/edit_profile.php" class="btn btn-small btn-secondary w-full text-center">Edit Profile</a>
                 <a href="<?php echo baseUrl(); ?>/donor/submit_testimonial.php" class="btn btn-small btn-secondary w-full text-center">Share Your Story</a>
-                <a href="<?php echo baseUrl(); ?>/donor/notification_prefs.php" class="btn btn-small btn-secondary w-full text-center">Notification Preferences</a>
-                <a href="<?php echo baseUrl(); ?>/donor/component_registry.php" class="btn btn-small btn-secondary w-full text-center">Component Registries</a>
-                <a href="<?php echo baseUrl(); ?>/donor/clinical_trials.php" class="btn btn-small btn-secondary w-full text-center">Clinical Trials</a>
             </div>
         </div>
     </div>
