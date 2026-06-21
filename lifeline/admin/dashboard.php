@@ -11,7 +11,7 @@ $pendingVerify       = (int)$pdo->query("SELECT COUNT(*) FROM hospital_profiles 
 try {
     $pendingDsar = (int)$pdo->query("SELECT COUNT(*) FROM dsar_requests WHERE status = 'pending'")->fetchColumn();
 } catch (PDOException $e) {
-    $pendingDsar = 0;
+    $pendingDsar = 0; // table may not exist in all envs
 }
 
 $hour     = (int)date('G');
@@ -115,17 +115,14 @@ include '../includes/header.php';
         <?php if ($pendingTestimonials > 0): ?>
             <span class="adm-badge adm-badge-warn">&#9997; <?php echo $pendingTestimonials; ?> Story Review<?php echo $pendingTestimonials !== 1 ? 's' : ''; ?></span>
         <?php endif; ?>
-        <?php if ($pendingDsar > 0): ?>
-            <span class="adm-badge adm-badge-warn">&#128196; <?php echo $pendingDsar; ?> Pending DSAR<?php echo $pendingDsar !== 1 ? 's' : ''; ?></span>
-        <?php endif; ?>
-        <?php if ($requestCritical === 0 && $pendingVerify === 0 && $pendingTestimonials === 0 && $pendingDsar === 0): ?>
+        <?php if ($requestCritical === 0 && $pendingVerify === 0 && $pendingTestimonials === 0): ?>
             <span class="adm-badge adm-badge-ok">&#10003; All clear</span>
         <?php endif; ?>
     </div>
 </div>
 
 <!-- ── KPI Strip ─────────────────────────────────────────────────────────── -->
-<div class="adm-kpi-row">
+<div class="adm-kpi-row" style="grid-template-columns:repeat(5,1fr)">
     <div class="adm-kpi">
         <div class="kv"><?php echo $donorCount; ?></div>
         <div class="kl">Total<br>Donors</div>
@@ -145,10 +142,6 @@ include '../includes/header.php';
     <div class="adm-kpi <?php echo $pendingVerify > 0 ? 'adm-kpi-warn' : ''; ?>">
         <div class="kv"><?php echo $pendingVerify; ?></div>
         <div class="kl">Pending<br>Verif.</div>
-    </div>
-    <div class="adm-kpi <?php echo $pendingDsar > 0 ? 'adm-kpi-warn' : ''; ?>">
-        <div class="kv"><?php echo $pendingDsar; ?></div>
-        <div class="kl">Pending<br>DSARs</div>
     </div>
 </div>
 
@@ -195,103 +188,22 @@ include '../includes/header.php';
             <p>Oversee all blood requests across all hospitals and urgency levels.</p>
             <div class="adm-open">Open &rarr;</div>
         </a>
-        <a href="<?php echo baseUrl(); ?>/admin/transfers.php" class="adm-card">
-            <span class="adm-icon">&#128666;</span>
-            <h3>Inter-Facility Transfers</h3>
-            <p>Network-wide cold-chain blood unit transfer oversight and status tracking.</p>
-            <div class="adm-open">Open &rarr;</div>
-        </a>
-        <a href="<?php echo baseUrl(); ?>/admin/component_types.php" class="adm-card">
-            <span class="adm-icon">&#128137;</span>
-            <h3>Component Types</h3>
-            <p>Manage the donation component catalogue — plasma, platelets, bone marrow, organs.</p>
-            <div class="adm-open">Open &rarr;</div>
-        </a>
-    </div>
-</div>
-
-<!-- ── Clinical & Analytics ──────────────────────────────────────────────── -->
-<div class="adm-section">
-    <div class="adm-section-head">
-        <span class="adm-dot"></span>
-        <h2>Clinical &amp; Analytics</h2>
-    </div>
-    <div class="adm-grid">
-        <a href="<?php echo baseUrl(); ?>/admin/clinical_trials.php" class="adm-card">
-            <span class="adm-icon">&#129514;</span>
-            <h3>Clinical Trials</h3>
-            <p>Create and manage consented rare-blood recruitment campaigns with eligibility matching.</p>
-            <div class="adm-open">Open &rarr;</div>
-        </a>
-        <a href="<?php echo baseUrl(); ?>/admin/forecasting.php" class="adm-card">
-            <span class="adm-icon">&#128200;</span>
-            <h3>Demand Forecasting</h3>
-            <p>Weighted moving-average forecasts per blood type and de-identified propensity scoring.</p>
-            <div class="adm-open">Open &rarr;</div>
-        </a>
-        <a href="<?php echo baseUrl(); ?>/admin/shortage_analytics.php" class="adm-card">
-            <span class="adm-icon">&#128202;</span>
-            <h3>Shortage Analytics</h3>
-            <p>De-identified public-health shortage heatmap, fulfillment rates, and time-to-fill by region.</p>
-            <div class="adm-open">Open &rarr;</div>
-        </a>
         <a href="<?php echo baseUrl(); ?>/admin/analytics.php" class="adm-card">
             <span class="adm-icon">&#128201;</span>
             <h3>Platform Analytics</h3>
-            <p>Platform-wide KPIs — registrations, fulfillment rates, blood type demand, geo distribution.</p>
+            <p>Platform-wide KPIs — registrations, fulfillment rates, and blood type demand.</p>
             <div class="adm-open">Open &rarr;</div>
         </a>
     </div>
 </div>
 
-<!-- ── Platform & Compliance ─────────────────────────────────────────────── -->
+<!-- ── Content & Security ────────────────────────────────────────────────── -->
 <div class="adm-section">
     <div class="adm-section-head">
         <span class="adm-dot"></span>
-        <h2>Platform &amp; Compliance</h2>
+        <h2>Content &amp; Security</h2>
     </div>
     <div class="adm-grid">
-        <a href="<?php echo baseUrl(); ?>/admin/dpo_dashboard.php" class="adm-card">
-            <?php if ($pendingDsar > 0): ?><span class="adm-cbadge adm-cbadge-warn"><?php echo $pendingDsar; ?></span><?php endif; ?>
-            <span class="adm-icon">&#128274;</span>
-            <h3>DPO Compliance</h3>
-            <p>DSAR queue, breach incidents, BAA agreements, DPIA register — DPDP/HIPAA program.</p>
-            <div class="adm-open">Open &rarr;</div>
-        </a>
-        <a href="<?php echo baseUrl(); ?>/admin/country_config.php" class="adm-card">
-            <span class="adm-icon">&#127758;</span>
-            <h3>Country Configuration</h3>
-            <p>Manage active countries, per-country GDPR/HIPAA flags, cooloff days, and locale defaults.</p>
-            <div class="adm-open">Open &rarr;</div>
-        </a>
-        <a href="<?php echo baseUrl(); ?>/admin/api_keys.php" class="adm-card">
-            <span class="adm-icon">&#128273;</span>
-            <h3>API Keys</h3>
-            <p>Issue, view, and revoke keys for the REST API /api/v1 endpoints.</p>
-            <div class="adm-open">Open &rarr;</div>
-        </a>
-    </div>
-</div>
-
-<!-- ── System & Security ─────────────────────────────────────────────────── -->
-<div class="adm-section">
-    <div class="adm-section-head">
-        <span class="adm-dot"></span>
-        <h2>System &amp; Security</h2>
-    </div>
-    <div class="adm-grid">
-        <a href="<?php echo baseUrl(); ?>/admin/slo_dashboard.php" class="adm-card">
-            <span class="adm-icon">&#128161;</span>
-            <h3>SLO Dashboard</h3>
-            <p>Real-time health: queue depth, critical request age, DB latency, replica lag, worker status.</p>
-            <div class="adm-open">Open &rarr;</div>
-        </a>
-        <a href="<?php echo baseUrl(); ?>/admin/activity.php" class="adm-card">
-            <span class="adm-icon">&#128203;</span>
-            <h3>Activity &amp; Audit</h3>
-            <p>Full audit trail of all system actions, login history, and CSV export.</p>
-            <div class="adm-open">Open &rarr;</div>
-        </a>
         <a href="<?php echo baseUrl(); ?>/admin/testimonials.php" class="adm-card">
             <?php if ($pendingTestimonials > 0): ?><span class="adm-cbadge adm-cbadge-warn"><?php echo $pendingTestimonials; ?></span><?php endif; ?>
             <span class="adm-icon">&#11088;</span>
@@ -299,11 +211,11 @@ include '../includes/header.php';
             <p>Review and approve donor stories before they are published publicly.</p>
             <div class="adm-open">Open &rarr;</div>
         </a>
-        <a href="<?php echo baseUrl(); ?>/auth/setup_2fa.php" class="adm-card">
-            <span class="adm-icon">&#128272;</span>
-            <h3>Two-Factor Auth</h3>
-            <p>Enable or manage TOTP 2FA for your admin account.</p>
-            <div class="adm-open">Manage &rarr;</div>
+        <a href="<?php echo baseUrl(); ?>/admin/activity.php" class="adm-card">
+            <span class="adm-icon">&#128203;</span>
+            <h3>Activity &amp; Audit</h3>
+            <p>Full audit trail of all system actions, login history, and CSV export.</p>
+            <div class="adm-open">Open &rarr;</div>
         </a>
     </div>
 </div>

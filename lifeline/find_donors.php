@@ -6,52 +6,21 @@ requireAuth();
 $bloodType     = $_GET['blood_type'] ?? '';
 $city          = trim($_GET['city'] ?? '');
 $state         = trim($_GET['state'] ?? '');
-$radius        = isset($_GET['radius']) ? max(1, (int)$_GET['radius']) : 50;
 $componentCode = preg_replace('/[^a-z_]/', '', $_GET['component'] ?? '');
 
 $searchLat = null;
 $searchLng = null;
 $geoSearch = false;
 
-// Pre-fill city/state from the logged-in user's profile when no search has been submitted yet.
-$profileCity  = '';
-$profileState = '';
-if (isLoggedIn() && !isset($_GET['search'])) {
-    $uid = (int)($_SESSION['user_id'] ?? 0);
-    if (isDonor()) {
-        $row = $pdo->prepare("SELECT city, state FROM donor_profiles WHERE user_id = ? LIMIT 1");
-        $row->execute([$uid]);
-        $row = $row->fetch();
-    } elseif (isHospital()) {
-        $row = $pdo->prepare("SELECT city, state FROM hospital_profiles WHERE user_id = ? LIMIT 1");
-        $row->execute([$uid]);
-        $row = $row->fetch();
-    } else {
-        $row = false;
-    }
-    if ($row) {
-        $profileCity  = $row['city']  ?? '';
-        $profileState = $row['state'] ?? '';
-    }
-}
+$results   = [];
+$hasSearch = true; // always show results; filters narrow them down
 
-// Use profile values as defaults only when the user hasn't typed anything yet.
-if ($city === '' && $profileCity !== '') {
-    $city = $profileCity;
-}
-if ($state === '' && $profileState !== '') {
-    $state = $profileState;
-}
-
-$results  = [];
-$hasSearch = isset($_GET['search']) || ($bloodType || $city || $state);
-
-if ($_SERVER['REQUEST_METHOD'] === 'GET' && $hasSearch) {
-    // Try to geocode the search location for distance ranking (FR-20).
-    // Falls back to city-string filter when Nominatim is unreachable.
-    $searchCountry = trim($_GET['country'] ?? 'Ethiopia');
-    if ($city !== '' || $state !== '') {
-        $coords = geocodeLocation($city, $state, $searchCountry ?: 'Ethiopia');
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    // Geocode only when a city is given — geocoding a bare state name
+    // gives an imprecise centroid that breaks the radius filter.
+    $searchCountry = 'Ethiopia';
+    if ($city !== '') {
+        $coords = geocodeLocation($city, $state, $searchCountry);
         if ($coords) {
             $searchLat = $coords['latitude'];
             $searchLng = $coords['longitude'];
@@ -95,9 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $hasSearch) {
     }
 
     if ($geoSearch) {
-        // Radius pre-filter (HAVING because distance_km is a computed alias).
-        $sql .= " HAVING distance_km <= ?";
-        $params[] = $radius;
+        // Show all donors sorted by distance; no hard radius cut-off.
         $sql .= " ORDER BY distance_km ASC";
     } else {
         // No geo: fall back to city/state text filter + name sort.
@@ -178,15 +145,6 @@ include 'includes/header.php';
             <label for="state">State</label>
             <input type="text" id="state" name="state" value="<?php echo htmlspecialchars($state); ?>" placeholder="e.g. Oromia">
         </div>
-        <div class="form-group flex-1 minw-120 mb-0">
-            <label for="radius">Radius (km)</label>
-            <select id="radius" name="radius">
-                <?php foreach ([10, 25, 50, 100, 200] as $r): ?>
-                    <option value="<?php echo $r; ?>" <?php echo $radius === $r ? 'selected' : ''; ?>><?php echo $r; ?> km</option>
-                <?php endforeach; ?>
-            </select>
-            <span class="fs-75 text-muted mt-4 d-block">Requires City or State</span>
-        </div>
         <div class="form-group flex-05 minw-120 mb-0 pt-25">
             <label class="flex items-center gap-8 cursor-pointer">
                 <input type="checkbox" name="show_all" value="1" <?php echo isset($_GET['show_all']) && $_GET['show_all'] == '1' ? 'checked' : ''; ?>>
@@ -200,9 +158,8 @@ include 'includes/header.php';
     </form>
 </div>
 
-<?php if ($hasSearch): ?>
 <div class="card">
-    <h2>Search Results (<?php echo count($results); ?> found<?php echo $geoSearch ? ', sorted by distance' : ''; ?>)</h2>
+    <h2><?php echo count($results); ?> Donor<?php echo count($results) !== 1 ? 's' : ''; ?> Found<?php echo $geoSearch ? ' &middot; sorted by distance' : ''; ?></h2>
     <?php if (count($results) > 0): ?>
         <div class="table-wrapper">
             <table>
@@ -279,6 +236,5 @@ include 'includes/header.php';
         <p><?php echo t('donors.no_results'); ?></p>
     <?php endif; ?>
 </div>
-<?php endif; ?>
 
 <?php include 'includes/footer.php'; ?>

@@ -13,6 +13,19 @@ function newSosCaptcha(): array {
 
 $errors = [];
 
+// Pre-fill form from hospital profile when the logged-in user is a hospital.
+$prefill = ['name' => '', 'phone' => '', 'city' => '', 'state' => '', 'hospital' => ''];
+if (isHospital()) {
+    $hp = getHospitalProfile($pdo, (int)$_SESSION['user_id']);
+    if ($hp) {
+        $prefill['name']     = $hp['hospital_name'] ?? '';
+        $prefill['phone']    = $hp['phone'] ?? '';
+        $prefill['city']     = $hp['city'] ?? '';
+        $prefill['state']    = $hp['state'] ?? '';
+        $prefill['hospital'] = $hp['hospital_name'] ?? '';
+    }
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     validateCsrf();
     $name = sanitizeString($_POST['name'] ?? '');
@@ -143,11 +156,11 @@ include 'includes/header.php';
             <div class="grid-2">
                 <div class="form-group">
                     <label for="name">Your Name *</label>
-                    <input type="text" id="name" name="name" value="<?php echo old('name'); ?>" required placeholder="Full name">
+                    <input type="text" id="name" name="name" value="<?php echo old('name', $prefill['name']); ?>" required placeholder="Full name">
                 </div>
                 <div class="form-group">
                     <label for="phone">Phone Number *</label>
-                    <input type="tel" id="phone" name="phone" value="<?php echo old('phone'); ?>" required placeholder="+251-9X-XXX-XXXX">
+                    <input type="tel" id="phone" name="phone" value="<?php echo old('phone', $prefill['phone']); ?>" required placeholder="+251-9X-XXX-XXXX">
                 </div>
             </div>
 
@@ -170,17 +183,17 @@ include 'includes/header.php';
             <div class="grid-2">
                 <div class="form-group">
                     <label for="city">City *</label>
-                    <input type="text" id="city" name="city" value="<?php echo old('city'); ?>" required placeholder="e.g. Addis Ababa">
+                    <input type="text" id="city" name="city" value="<?php echo old('city', $prefill['city']); ?>" required placeholder="e.g. Addis Ababa">
                 </div>
                 <div class="form-group">
                     <label for="state">State *</label>
-                    <input type="text" id="state" name="state" value="<?php echo old('state'); ?>" required placeholder="e.g. Oromia">
+                    <input type="text" id="state" name="state" value="<?php echo old('state', $prefill['state']); ?>" required placeholder="e.g. Oromia">
                 </div>
             </div>
 
             <div class="form-group">
-                <label for="hospital">Hospital Name (If admitted)</label>
-                <input type="text" id="hospital" name="hospital" value="<?php echo old('hospital'); ?>" placeholder="e.g. Black Lion Hospital">
+                <label for="hospital">Hospital Name</label>
+                <input type="text" id="hospital" name="hospital" value="<?php echo old('hospital', $prefill['hospital']); ?>" placeholder="e.g. Black Lion Hospital">
             </div>
 
             <div class="form-group">
