@@ -703,12 +703,15 @@ function getProfilePic(array $profile): string {
         }
     }
     
-    // Default to a simple initial-based avatar (no photos of people)
-    $name = urlencode($profile['full_name'] ?? 'User');
-    $bg = 'b91c1c'; // Crimson
-    $color = 'ffffff';
-    
-    return "https://ui-avatars.com/api/?name=$name&background=$bg&color=$color&size=200&bold=true";
+    // Inline SVG letter avatar — no external network call needed
+    $letter = strtoupper(mb_substr($profile['full_name'] ?? 'U', 0, 1, 'UTF-8')) ?: 'U';
+    $svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">'
+         . '<circle cx="100" cy="100" r="100" fill="#b91c1c"/>'
+         . '<text x="100" y="100" dy=".35em" text-anchor="middle" fill="#ffffff"'
+         . ' font-family="system-ui,sans-serif" font-size="90" font-weight="700">'
+         . htmlspecialchars($letter, ENT_XML1, 'UTF-8')
+         . '</text></svg>';
+    return 'data:image/svg+xml;base64,' . base64_encode($svg);
 }
 
 /**

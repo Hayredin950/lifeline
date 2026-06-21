@@ -87,8 +87,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 trim($_POST['city'] ?? ''),
                 trim($_POST['state'] ?? ''),
                 trim($_POST['country'] ?? 'Ethiopia'),
-                $_POST['date_of_birth'] ?: null,
-                $_POST['gender'] ?? null,
+                ($_POST['date_of_birth'] ?? '') ?: null,
+                ($_POST['gender'] ?? '') ?: null,
                 $lat,
                 $lng
             ]);
@@ -272,7 +272,10 @@ include 'includes/header.php';
             <label class="flex items-center gap-10">
                 <input type="checkbox" name="consent_terms" value="1" required
                        <?php echo isset($_POST['consent_terms']) ? 'checked' : ''; ?>>
-                <span><?php echo t('register.consent', ['version' => TERMS_VERSION]); ?></span>
+                <span>I have read and agree to the
+                    <a href="<?php echo baseUrl(); ?>/terms.php" target="_blank">Terms of Service &amp; Privacy Policy</a>
+                    (v<?php echo htmlspecialchars(TERMS_VERSION); ?>)
+                </span>
             </label>
         </div>
 
