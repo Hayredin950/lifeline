@@ -34,14 +34,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Clear rate limiting on successful login
         clearLoginAttempts($identifier);
 
-        // 2FA intercept for hospital and admin accounts.
-        if (!empty($user['totp_enabled']) && in_array($user['role'], ['hospital', 'admin'], true)) {
-            session_regenerate_id(true);
-            $_SESSION['2fa_pending_user_id'] = (int)$user['id'];
-            $_SESSION['2fa_pending_role']    = $user['role'];
-            redirect(baseUrl() . '/auth/verify_2fa.php');
-        }
-
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['role'] = $user['role'];
         $_SESSION['email'] = $user['email'];

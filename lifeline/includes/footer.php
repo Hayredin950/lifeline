@@ -39,7 +39,6 @@
                     <?php if (isAdmin()): ?>
                         <li><a href="<?php echo baseUrl(); ?>/admin/dashboard.php">Admin Panel</a></li>
                         <li><a href="<?php echo baseUrl(); ?>/messages.php">Messages</a></li>
-                        <li><a href="<?php echo baseUrl(); ?>/auth/setup_2fa.php">Two-Factor Auth</a></li>
                         <li><a href="<?php echo baseUrl(); ?>/logout.php">Logout</a></li>
                     <?php elseif (isDonor()): ?>
                         <li><a href="<?php echo baseUrl(); ?>/donor/dashboard.php">My Dashboard</a></li>
