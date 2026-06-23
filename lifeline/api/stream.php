@@ -66,7 +66,7 @@ if (function_exists('apache_setenv')) apache_setenv('no-gzip', 1);
 set_time_limit(35);   // a little over the loop duration to be safe
 
 $loopSeconds = 30;
-$pollInterval = 2;    // poll DB every 2 s — much lighter than one HTTP round-trip/3 s
+$pollInterval = 1;    // poll DB every 1 s for faster message delivery
 $start = time();
 $lastPing = $start;
 

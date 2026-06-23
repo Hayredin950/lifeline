@@ -460,9 +460,9 @@ function runCheck() {
                 <div class="elig-result-icon">&#10003;</div>
                 <div class="elig-result-title" style="color:#10b981;">You Appear Eligible to Donate</div>
                 <p style="color:rgba(255,255,255,.65); margin-bottom:24px; max-width:440px; margin-left:auto; margin-right:auto; line-height:1.6;">
-                    Based on your answers you meet the basic requirements. Visit a blood bank for a formal medical screening — it only takes 15 minutes.
+                    Based on your answers you meet the basic requirements. Visit a hospital for a formal medical screening — it only takes 15 minutes.
                 </p>
-                <a href="<?php echo baseUrl(); ?>/blood_banks.php" class="btn" style="background:#10b981; border-color:#10b981;">Find a Blood Bank Near You</a>
+                <a href="<?php echo baseUrl(); ?>/blood_banks.php" class="btn" style="background:#10b981; border-color:#10b981;">Find a Hospital Near You</a>
             </div>`;
     } else {
         const list = reasons.map(r => `<li>${r}</li>`).join('');

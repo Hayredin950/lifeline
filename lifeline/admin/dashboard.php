@@ -7,7 +7,7 @@ $hospitalCount       = (int)$pdo->query("SELECT COUNT(*) FROM hospital_profiles"
 $requestOpen         = (int)$pdo->query("SELECT COUNT(*) FROM blood_requests WHERE status = 'open'")->fetchColumn();
 $requestCritical     = (int)$pdo->query("SELECT COUNT(*) FROM blood_requests WHERE status = 'open' AND urgency = 'critical'")->fetchColumn();
 $pendingTestimonials = (int)$pdo->query("SELECT COUNT(*) FROM testimonials WHERE is_approved = 0")->fetchColumn();
-$pendingVerify       = (int)$pdo->query("SELECT COUNT(*) FROM hospital_profiles WHERE is_verified = 0")->fetchColumn();
+$pendingVerify = (int)$pdo->query("SELECT COUNT(*) FROM hospital_profiles WHERE verification_status = 'pending'")->fetchColumn();
 try {
     $pendingDsar = (int)$pdo->query("SELECT COUNT(*) FROM dsar_requests WHERE status = 'pending'")->fetchColumn();
 } catch (PDOException $e) {
@@ -183,15 +183,9 @@ include '../includes/header.php';
     <div class="adm-grid">
         <a href="<?php echo baseUrl(); ?>/admin/manage_requests.php" class="adm-card">
             <?php if ($requestCritical > 0): ?><span class="adm-cbadge"><?php echo $requestCritical; ?> crit.</span><?php endif; ?>
-            <span class="adm-icon">&#128139;</span>
+            <span class="adm-icon">&#128203;</span>
             <h3>Manage Requests</h3>
             <p>Oversee all blood requests across all hospitals and urgency levels.</p>
-            <div class="adm-open">Open &rarr;</div>
-        </a>
-        <a href="<?php echo baseUrl(); ?>/admin/analytics.php" class="adm-card">
-            <span class="adm-icon">&#128201;</span>
-            <h3>Platform Analytics</h3>
-            <p>Platform-wide KPIs — registrations, fulfillment rates, and blood type demand.</p>
             <div class="adm-open">Open &rarr;</div>
         </a>
     </div>
@@ -212,9 +206,15 @@ include '../includes/header.php';
             <div class="adm-open">Open &rarr;</div>
         </a>
         <a href="<?php echo baseUrl(); ?>/admin/activity.php" class="adm-card">
-            <span class="adm-icon">&#128203;</span>
+            <span class="adm-icon">&#128202;</span>
             <h3>Activity &amp; Audit</h3>
             <p>Full audit trail of all system actions, login history, and CSV export.</p>
+            <div class="adm-open">Open &rarr;</div>
+        </a>
+        <a href="<?php echo baseUrl(); ?>/messages.php" class="adm-card">
+            <span class="adm-icon">&#128172;</span>
+            <h3>Messages</h3>
+            <p>Send and receive messages with donors and hospitals across the network.</p>
             <div class="adm-open">Open &rarr;</div>
         </a>
     </div>

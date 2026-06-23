@@ -80,11 +80,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $units = max(1, min(10, $units));
 
         // Create the critical request.
+        $hospitalId = isHospital() ? (int)$_SESSION['user_id'] : NULL;
         $stmt = $pdo->prepare("
             INSERT INTO blood_requests (hospital_id, patient_blood_type, units_needed, urgency, status, city, state, hospital_address, notes, required_date)
             VALUES (?, ?, ?, 'critical', 'open', ?, ?, ?, ?, CURDATE())
         ");
-        $stmt->execute([NULL, $bloodType, $units, $city, $state, $hospital ?: 'Emergency - ' . $name, "EMERGENCY SOS REQUEST\nContact: $name\nPhone: $phone\n" . $notes]);
+        $stmt->execute([$hospitalId, $bloodType, $units, $city, $state, $hospital ?: 'Emergency - ' . $name, "EMERGENCY SOS REQUEST\nContact: $name\nPhone: $phone\n" . $notes]);
         $requestId = $pdo->lastInsertId();
 
         // ENQUEUE donor notifications (DEF-03) — the worker delivers them off the request thread.
@@ -126,7 +127,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         auditLog($pdo, 'emergency_sos', 'request', $requestId, null, ['queued_notifications' => $queued]);
         unset($_SESSION['sos_captcha']);
         setFlash("Emergency SOS submitted! {$queued} compatible donor(s) in your area are being notified.", 'success');
-        redirect(baseUrl() . '/emergency.php');
+        redirect(baseUrl() . '/hospital/dashboard.php');
     } else {
         setFlash(implode('<br>', $errors), 'danger');
         // Fall through to re-render with preserved inputs and a fresh CAPTCHA.
@@ -236,7 +237,7 @@ include 'includes/header.php';
             <h3 class="text-success">&#128222; Emergency Hotlines</h3>
             <div class="mt-8">
                 <p class="fs-90"><strong>Ethiopian Red Cross:</strong> +251 11 551 5166</p>
-                <p class="fs-90"><strong>Blood Bank (NABC):</strong> +251 11 667 7281</p>
+                <p class="fs-90"><strong>National Blood Bank (NABC):</strong> +251 11 667 7281</p>
                 <p class="fs-90"><strong>Emergency:</strong> 911</p>
                 <p class="fs-90"><strong>Ambulance:</strong> 907</p>
             </div>
@@ -245,10 +246,10 @@ include 'includes/header.php';
         <div class="card">
             <h3>&#128161; Tips</h3>
             <ul class="list-indent text-secondary fs-90 mt-8">
-                <li>Call the blood bank directly for fastest response</li>
+                <li>Call the hospital directly for fastest response</li>
                 <li>Keep patient blood report ready</li>
                 <li>Arrange transport for donors</li>
-                <li>Check nearby blood banks too</li>
+                <li>Message nearby hospitals via the Hospital Directory</li>
             </ul>
         </div>
     </div>

@@ -14,10 +14,14 @@ $totalPages = (int)ceil($totalCount / $perPage);
 
 // Get paginated requests
 $stmt = $pdo->prepare("
-    SELECT br.*, hp.hospital_name
+    SELECT br.*,
+           COALESCE(hp.hospital_name, br.hospital_address) AS hospital_name,
+           (br.notes LIKE 'EMERGENCY SOS REQUEST%') AS is_sos
     FROM blood_requests br
     LEFT JOIN hospital_profiles hp ON br.hospital_id = hp.user_id
-    ORDER BY br.created_at DESC
+    ORDER BY (br.notes LIKE 'EMERGENCY SOS REQUEST%') DESC,
+             br.urgency = 'critical' DESC,
+             br.created_at DESC
     LIMIT ? OFFSET ?
 ");
 $stmt->execute([$perPage, $offset]);
@@ -46,9 +50,14 @@ include '../includes/header.php';
         </thead>
         <tbody>
             <?php foreach ($requests as $r): ?>
-            <tr>
+            <tr <?php echo $r['is_sos'] ? 'style="background:rgba(220,38,38,.06)"' : ''; ?>>
                 <td>#<?php echo (int)$r['id']; ?></td>
-                <td><?php echo $r['hospital_name'] ? htmlspecialchars($r['hospital_name']) : '<span class="text-crimson fw-600">Emergency SOS</span>'; ?></td>
+                <td>
+                    <?php if ($r['is_sos']): ?>
+                        <span class="badge badge-danger" style="font-size:.68rem;padding:2px 6px;margin-right:4px">&#9888; SOS</span>
+                    <?php endif; ?>
+                    <?php echo $r['hospital_name'] ? htmlspecialchars($r['hospital_name']) : '<span class="text-crimson fw-600">Emergency</span>'; ?>
+                </td>
                 <td><?php echo htmlspecialchars($r['patient_blood_type']); ?></td>
                 <td><?php echo (int)$r['units_needed']; ?></td>
                 <td><?php echo ucfirst($r['urgency']); ?></td>

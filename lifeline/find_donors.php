@@ -8,6 +8,14 @@ $city          = trim($_GET['city'] ?? '');
 $state         = trim($_GET['state'] ?? '');
 $componentCode = preg_replace('/[^a-z_]/', '', $_GET['component'] ?? '');
 
+// Pre-load components to decide if the dropdown is useful
+try {
+    $compRows = $pdo->query("SELECT code, label FROM donation_components WHERE is_active = 1 ORDER BY id")->fetchAll();
+} catch (PDOException $e) {
+    $compRows = [];
+}
+$showComponentFilter = count($compRows) > 0;
+
 $searchLat = null;
 $searchLng = null;
 $geoSearch = false;
@@ -34,20 +42,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $compParam  = $filterComp ? [$componentCode] : [];
 
     if ($geoSearch) {
-        // Distance-ranked query: donors with coords sorted by km from search point;
-        // coordless donors appended last so geocoding gaps never hide a willing donor.
+        // Distance-ranked query: donors with valid coords sorted by km from search point.
+        // City/state text filters are NOT applied in geo mode — the radius handles location.
         $sql = "
             SELECT dp.*, u.email,
-                   ST_Distance_Sphere(dp.geo, POINT(?, ?)) / 1000 AS distance_km
+                   ST_Distance_Sphere(POINT(dp.longitude, dp.latitude), POINT(?, ?)) / 1000 AS distance_km
             FROM donor_profiles dp
             JOIN users u ON dp.user_id = u.id
             $compJoin
             WHERE u.is_active = true
+              AND u.deleted_at IS NULL
               AND dp.latitude IS NOT NULL
+              AND dp.longitude IS NOT NULL
         ";
         $params = array_merge([$searchLng, $searchLat], $compParam);
     } else {
-        $sql    = "SELECT dp.*, u.email, NULL AS distance_km FROM donor_profiles dp JOIN users u ON dp.user_id = u.id $compJoin WHERE u.is_active = true";
+        $sql    = "SELECT dp.*, u.email, NULL AS distance_km FROM donor_profiles dp JOIN users u ON dp.user_id = u.id $compJoin WHERE u.is_active = true AND u.deleted_at IS NULL";
         $params = $compParam;
     }
 
@@ -64,10 +74,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     }
 
     if ($geoSearch) {
-        // Show all donors sorted by distance; no hard radius cut-off.
+        // In geo mode: sort by distance.
         $sql .= " ORDER BY distance_km ASC";
     } else {
-        // No geo: fall back to city/state text filter + name sort.
+        // Text search mode: filter by city/state fields and sort alphabetically.
         if ($city) {
             $sql .= " AND dp.city LIKE ?";
             $params[] = '%' . $city . '%';
@@ -84,14 +94,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $stmt->execute($params);
     $results = $stmt->fetchAll();
 
-    // Append coordless donors at the end when doing a geo search (never hide them).
+    // Append coordless donors at the end when doing a geo search (never hide a willing donor).
     if ($geoSearch) {
         $fallbackSql = "
             SELECT dp.*, u.email, NULL AS distance_km
             FROM donor_profiles dp
             JOIN users u ON dp.user_id = u.id
             $compJoin
-            WHERE u.is_active = true AND u.deleted_at IS NULL AND dp.latitude IS NULL
+            WHERE u.is_active = true AND u.deleted_at IS NULL
+              AND (dp.latitude IS NULL OR dp.longitude IS NULL)
         ";
         $fbParams = $compParam;
         if (!$showAll) {
@@ -124,19 +135,19 @@ include 'includes/header.php';
                 <?php endforeach; ?>
             </select>
         </div>
+        <?php if ($showComponentFilter): ?>
         <div class="form-group flex-1 minw-180 mb-0">
             <label for="component">Component</label>
             <select id="component" name="component">
                 <option value="">Any (Whole Blood)</option>
-                <?php
-                $compRows = $pdo->query("SELECT code, label FROM donation_components WHERE is_active = 1 ORDER BY id")->fetchAll();
-                foreach ($compRows as $cr): ?>
+                <?php foreach ($compRows as $cr): ?>
                     <option value="<?php echo htmlspecialchars($cr['code']); ?>" <?php echo $componentCode === $cr['code'] ? 'selected' : ''; ?>>
                         <?php echo htmlspecialchars($cr['label']); ?>
                     </option>
                 <?php endforeach; ?>
             </select>
         </div>
+        <?php endif; ?>
         <div class="form-group flex-1 minw-180 mb-0">
             <label for="city">City</label>
             <input type="text" id="city" name="city" value="<?php echo htmlspecialchars($city); ?>" placeholder="e.g. Addis Ababa">
@@ -201,7 +212,7 @@ include 'includes/header.php';
                             elseif ($statusInfo['status'] === 'busy') $statusClass = 'text-amber';
                             elseif ($statusInfo['status'] === 'cool_off') $statusClass = 'text-crimson';
                             ?>
-                            <span class="fw-600 <?php echo $statusClass; ?>" title="<?php echo htmlspecialchars($statusInfo['label']); ?>">
+                            <span class="fw-60 <?php echo $statusClass; ?>" title="<?php echo htmlspecialchars($statusInfo['label']); ?>">
                                 <?php echo ucfirst($statusInfo['status'] === 'cool_off' ? 'Cool-off' : $statusInfo['status']); ?>
                             </span>
                             <?php if ($statusInfo['status'] === 'cool_off'): ?>

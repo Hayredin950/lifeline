@@ -44,6 +44,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($phone !== '' && !validatePhone($phone)) {
             $errors[] = 'Please enter a valid phone number (e.g. +251 91 234 5678).';
         }
+        $dob = $_POST['date_of_birth'] ?? '';
+        if ($dob !== '') {
+            $dobDate = DateTime::createFromFormat('Y-m-d', $dob);
+            if (!$dobDate) {
+                $errors[] = 'Please enter a valid date of birth.';
+            } else {
+                $age = (int)(new DateTime())->diff($dobDate)->y;
+                if ($age < 15) {
+                    $errors[] = 'Donors must be at least 15 years old to register.';
+                }
+            }
+        }
     }
 
     // Consent to terms is mandatory (FR-49 / Doc 07 §6).
@@ -210,7 +222,10 @@ include 'includes/header.php';
         </div>
         <div class="form-group">
             <label for="date_of_birth">Date of Birth</label>
-            <input type="date" id="date_of_birth" name="date_of_birth" value="<?php echo old('date_of_birth'); ?>">
+            <input type="date" id="date_of_birth" name="date_of_birth"
+                   max="<?php echo date('Y-m-d', strtotime('-15 years')); ?>"
+                   value="<?php echo old('date_of_birth'); ?>">
+            <small style="color:rgba(255,255,255,.45)">Must be at least 15 years old to donate.</small>
         </div>
         <div class="form-group">
             <label for="gender">Gender</label>

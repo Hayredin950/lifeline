@@ -2,6 +2,28 @@
 require_once '../includes/functions.php';
 requireAdmin();
 
+// Handle donor verification toggle
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    validateCsrf();
+    $targetId = (int)($_POST['user_id'] ?? 0);
+    $action   = $_POST['action'] ?? '';
+
+    if ($targetId && $action === 'verify') {
+        $pdo->prepare("UPDATE donor_profiles SET is_verified = 1 WHERE user_id = ?")
+            ->execute([$targetId]);
+        $pdo->prepare("INSERT INTO notifications (user_id, title, message, type) VALUES (?, 'Account Verified', 'Your donor account has been verified by an administrator.', 'system')")
+            ->execute([$targetId]);
+        auditLog($pdo, 'donor_verified', 'donor_profile', $targetId, null, ['admin' => $_SESSION['user_id']]);
+        setFlash('Donor verified.', 'success');
+    } elseif ($targetId && $action === 'unverify') {
+        $pdo->prepare("UPDATE donor_profiles SET is_verified = 0 WHERE user_id = ?")
+            ->execute([$targetId]);
+        auditLog($pdo, 'donor_unverified', 'donor_profile', $targetId, null, ['admin' => $_SESSION['user_id']]);
+        setFlash('Donor verification revoked.', 'info');
+    }
+    redirect(baseUrl() . '/admin/manage_donors.php?' . http_build_query(['page' => $_GET['page'] ?? 1]));
+}
+
 // Pagination
 $pagination = getPaginationParams(25);
 $page = $pagination['page'];
@@ -42,44 +64,61 @@ include '../includes/header.php';
         </div>
     </div>
     <table>
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Blood Type</th>
-                <th>City</th>
-                <th>Phone</th>
-                <th>Status</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php foreach ($donors as $d): ?>
-            <tr>
-                <td><?php echo (int)$d['id']; ?></td>
-                <td><?php echo htmlspecialchars($d['full_name']); ?></td>
-                <td><?php echo htmlspecialchars($d['email']); ?></td>
-                <td><strong><?php echo htmlspecialchars($d['blood_type']); ?></strong></td>
-                <td><?php echo htmlspecialchars($d['city']); ?></td>
-                <td><?php echo htmlspecialchars($d['phone']); ?></td>
-                <td>
-                    <?php if ($d['deleted_at']): ?>
-                        <span class="text-muted fw-600">Deleted <?php echo date('M j Y', strtotime($d['deleted_at'])); ?></span>
-                    <?php elseif ($d['is_active']): ?>
-                        <span class="text-success-dark fw-600">Active</span>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Blood Type</th>
+            <th>City</th>
+            <th>Phone</th>
+            <th>Status</th>
+            <th>Verified</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        <?php foreach ($donors as $d): ?>
+        <tr>
+            <td><?php echo (int)$d['id']; ?></td>
+            <td><?php echo htmlspecialchars($d['full_name']); ?></td>
+            <td><?php echo htmlspecialchars($d['email']); ?></td>
+            <td><strong><?php echo htmlspecialchars($d['blood_type']); ?></strong></td>
+            <td><?php echo htmlspecialchars($d['city']); ?></td>
+            <td><?php echo htmlspecialchars($d['phone']); ?></td>
+            <td>
+                <?php if ($d['deleted_at']): ?>
+                    <span class="text-muted fw-600">Deleted <?php echo date('M j Y', strtotime($d['deleted_at'])); ?></span>
+                <?php elseif ($d['is_active']): ?>
+                    <span class="text-success-dark fw-600">Active</span>
+                <?php else: ?>
+                    <span class="text-danger-dark fw-600">Inactive</span>
+                <?php endif; ?>
+            </td>
+            <td>
+                <?php if ($d['is_verified']): ?>
+                    <span class="text-success-dark fw-600">Yes</span>
+                <?php else: ?>
+                    <span class="text-muted fw-600">No</span>
+                <?php endif; ?>
+            </td>
+            <td>
+                <a href="<?php echo baseUrl(); ?>/admin/edit_record.php?type=donor&id=<?php echo (int)$d['user_id']; ?>" class="btn btn-small">Edit</a>
+                <a href="<?php echo baseUrl(); ?>/admin/delete_record.php?type=donor&id=<?php echo (int)$d['user_id']; ?>" class="btn btn-small bg-danger-dark">Delete</a>
+                <form method="POST" action="" style="display:inline">
+                    <input type="hidden" name="csrf_token" value="<?php echo csrfToken(); ?>">
+                    <input type="hidden" name="user_id" value="<?php echo (int)$d['user_id']; ?>">
+                    <?php if ($d['is_verified']): ?>
+                        <button name="action" value="unverify" type="submit" class="btn btn-small btn-secondary">Unverify</button>
                     <?php else: ?>
-                        <span class="text-danger-dark fw-600">Inactive</span>
+                        <button name="action" value="verify" type="submit" class="btn btn-small text-success-dark">Verify</button>
                     <?php endif; ?>
-                </td>
-                <td>
-                    <a href="<?php echo baseUrl(); ?>/admin/edit_record.php?type=donor&id=<?php echo (int)$d['user_id']; ?>" class="btn btn-small">Edit</a>
-                    <a href="<?php echo baseUrl(); ?>/admin/delete_record.php?type=donor&id=<?php echo (int)$d['user_id']; ?>" class="btn btn-small bg-danger-dark">Delete</a>
-                </td>
-            </tr>
-            <?php endforeach; ?>
-        </tbody>
-    </table>
+                </form>
+            </td>
+        </tr>
+        <?php endforeach; ?>
+    </tbody>
+</table>
     
     <?php echo renderPagination($page, $totalPages, $perPage, baseUrl() . '/admin/manage_donors.php'); ?>
 </div>

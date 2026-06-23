@@ -26,12 +26,16 @@ $recentRequests = cacheGet('home:recent_requests');
 if ($recentRequests === null) {
     $pdoR = getReadPdo();
     $stmt = $pdoR->query("
-        SELECT br.*, hp.hospital_name,
-               hp.city AS hospital_city, hp.state AS hospital_state
+        SELECT br.*,
+               COALESCE(hp.hospital_name, br.hospital_address) AS hospital_name,
+               hp.city AS hospital_city, hp.state AS hospital_state,
+               (br.notes LIKE 'EMERGENCY SOS REQUEST%') AS is_sos
         FROM blood_requests br
         LEFT JOIN hospital_profiles hp ON br.hospital_id = hp.user_id
         WHERE br.status = 'open'
-        ORDER BY br.created_at DESC
+        ORDER BY (br.notes LIKE 'EMERGENCY SOS REQUEST%') DESC,
+                 br.urgency = 'critical' DESC,
+                 br.created_at DESC
         LIMIT 5
     ");
     $recentRequests = $stmt->fetchAll();
@@ -245,18 +249,25 @@ include 'includes/header.php';
             </thead>
             <tbody>
                 <?php foreach ($recentRequests as $req): ?>
-                <tr>
-                    <td><strong><?php echo htmlspecialchars($req['hospital_name']); ?></strong></td>
+                <tr <?php echo $req['is_sos'] ? 'style="background:rgba(220,38,38,.06)"' : ''; ?>>
+                    <td>
+                        <?php if ($req['is_sos']): ?>
+                            <span class="badge badge-danger" style="font-size:.68rem;padding:2px 7px;margin-right:6px;vertical-align:middle">&#9888; SOS</span>
+                        <?php endif; ?>
+                        <strong><?php echo htmlspecialchars($req['hospital_name'] ?: 'Emergency'); ?></strong>
+                    </td>
                     <td><span class="blood-badge"><?php echo htmlspecialchars($req['patient_blood_type']); ?></span></td>
                     <td><?php echo (int)$req['units_needed']; ?></td>
                     <td>
-                        <span class="badge badge-<?php echo $req['urgency']; ?>">
-                            <?php echo ucfirst($req['urgency']); ?>
-                        </span>
+                        <?php if ($req['urgency'] === 'critical'): ?>
+                            <span class="badge badge-danger">&#9888; <?php echo ucfirst($req['urgency']); ?></span>
+                        <?php else: ?>
+                            <span class="badge badge-<?php echo $req['urgency']; ?>"><?php echo ucfirst($req['urgency']); ?></span>
+                        <?php endif; ?>
                     </td>
                     <td><?php echo date('M j, Y', strtotime($req['created_at'])); ?></td>
                     <td><?php
-                        $loc = trim(($req['hospital_city'] ?? '') . ', ' . ($req['hospital_state'] ?? ''), ', ');
+                        $loc = trim(($req['hospital_city'] ?? $req['city'] ?? '') . ', ' . ($req['hospital_state'] ?? $req['state'] ?? ''), ', ');
                         echo $loc ? htmlspecialchars($loc) : '—';
                     ?></td>
                     <td><a href="<?php echo baseUrl(); ?>/view_request.php?id=<?php echo (int)$req['id']; ?>" class="btn btn-small">View</a></td>

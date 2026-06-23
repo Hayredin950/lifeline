@@ -73,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             UPDATE donor_profiles SET
                 full_name = ?, phone = ?, blood_type = ?, address = ?, city = ?,
                 state = ?, country = ?, date_of_birth = ?, gender = ?, is_available = ?,
-                latitude = ?, longitude = ?
+                latitude = ?, longitude = ?, is_verified = ?
             WHERE user_id = ?
         ");
         $stmt->execute([
@@ -89,6 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             isset($_POST['is_available']) ? 1 : 0,
             $lat,
             $lng,
+            isset($_POST['is_verified']) ? 1 : 0,
             $id
         ]);
         auditLog($pdo, 'update', 'donor', $id, null, [
@@ -242,6 +243,9 @@ include '../includes/header.php';
         </div>
         <div class="form-group">
             <label><input type="checkbox" name="is_available" value="1" <?php echo $record['is_available'] ? 'checked' : ''; ?>> Available to Donate</label>
+        </div>
+        <div class="form-group">
+            <label><input type="checkbox" name="is_verified" value="1" <?php echo $record['is_verified'] ? 'checked' : ''; ?>> Verified Donor</label>
         </div>
 
         <?php elseif ($type === 'hospital'): ?>

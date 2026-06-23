@@ -472,7 +472,7 @@ $shellClass = $activeConversation ? 'msg-shell has-convo' : 'msg-shell';
                     <div style="font-size:2.2rem;margin-bottom:10px">&#128172;</div>
                     No conversations yet.<br>
                     Message a hospital from the<br>
-                    <a href="<?php echo baseUrl(); ?>/blood_banks.php" style="color:#b91c1c">Blood Banks</a> page.
+                    <a href="<?php echo baseUrl(); ?>/blood_banks.php" style="color:#b91c1c">Hospital Directory</a>.
                 </div>
             <?php endif; ?>
         </div>
@@ -530,7 +530,7 @@ $shellClass = $activeConversation ? 'msg-shell has-convo' : 'msg-shell';
             <div class="msg-placeholder">
                 <div class="msg-placeholder-icon">&#9993;</div>
                 <h3>Your Messages</h3>
-                <p>Choose a conversation on the left, or start one from the Blood Banks page.</p>
+                <p>Choose a conversation on the left, or start one from the Hospital Directory.</p>
             </div>
         <?php endif; ?>
     </div>
@@ -793,7 +793,7 @@ jQuery(function ($) {
     }
 
     function startPoll() {
-        if (!pollTimer) pollTimer = setInterval(loadMessages, 3000);
+        if (!pollTimer) pollTimer = setInterval(loadMessages, 2000);
     }
     function stopPoll() { clearInterval(pollTimer); pollTimer = null; }
 

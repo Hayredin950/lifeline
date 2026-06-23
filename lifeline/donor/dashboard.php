@@ -46,6 +46,11 @@ $stmt = $pdo->prepare("SELECT * FROM notifications WHERE user_id = ? ORDER BY cr
 $stmt->execute([$userId]);
 $notifications = $stmt->fetchAll();
 
+// Get user's testimonials
+$stmt = $pdo->prepare("SELECT * FROM testimonials WHERE donor_id = ? ORDER BY created_at DESC");
+$stmt->execute([$userId]);
+$userTestimonials = $stmt->fetchAll();
+
 include '../includes/header.php';
 ?>
 
@@ -178,9 +183,6 @@ include '../includes/header.php';
                             <div class="notif-title"><?php echo htmlspecialchars($n['title']); ?></div>
                             <div class="notif-msg"><?php echo htmlspecialchars($n['message']); ?></div>
                             <div class="notif-time"><?php echo date('M j, g:i A', strtotime($n['created_at'])); ?></div>
-                            <?php if ($n['link']): ?>
-                                <a href="<?php echo baseUrl() . $n['link']; ?>" class="notif-link">View Details &rarr;</a>
-                            <?php endif; ?>
                         </div>
                     <?php endforeach; ?>
                 </div>
@@ -189,11 +191,43 @@ include '../includes/header.php';
             <?php endif; ?>
         </div>
 
+        <?php if (count($userTestimonials) > 0): ?>
+        <div class="card">
+            <h3>Your Stories</h3>
+            <div class="flex flex-col gap-12 mt-10">
+                <?php foreach ($userTestimonials as $t): ?>
+                    <div class="border border-glass-border rounded-lg p-12">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex gap-2">
+                                <?php for ($i = 1; $i <= 5; $i++): ?>
+                                    <span style="color: <?php echo $i > (int)$t['rating'] ? 'rgba(255,255,255,.15)' : '#f59e0b'; ?>">&#9733;</span>
+                                <?php endfor; ?>
+                            </div>
+                            <span class="badge <?php echo $t['is_approved'] ? 'badge-success' : 'badge-warning'; ?>">
+                                <?php echo $t['is_approved'] ? 'Published' : 'Pending Review'; ?>
+                            </span>
+                        </div>
+                        <p class="text-muted mb-8"><?php echo htmlspecialchars($t['story']); ?></p>
+                        <div class="flex gap-8">
+                            <a href="<?php echo baseUrl(); ?>/donor/submit_testimonial.php?edit=<?php echo (int)$t['id']; ?>" class="btn btn-small btn-secondary">Edit</a>
+                            <form method="POST" action="<?php echo baseUrl(); ?>/donor/submit_testimonial.php" class="inline">
+                                <input type="hidden" name="csrf_token" value="<?php echo csrfToken(); ?>">
+                                <input type="hidden" name="testimonial_id" value="<?php echo (int)$t['id']; ?>">
+                                <button type="submit" name="delete" value="1" class="btn btn-small bg-danger-dark" onclick="return confirm('Are you sure you want to delete this story?');">Delete</button>
+                            </form>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+        <?php endif; ?>
+
         <div class="card">
             <h3>Quick Actions</h3>
             <div class="flex flex-col gap-8 mt-10">
                 <a href="<?php echo baseUrl(); ?>/eligibility.php" class="btn btn-small btn-secondary w-full text-center">Check Eligibility</a>
-                <a href="<?php echo baseUrl(); ?>/blood_banks.php" class="btn btn-small btn-secondary w-full text-center">Blood Banks</a>
+                <a href="<?php echo baseUrl(); ?>/blood_banks.php" class="btn btn-small btn-secondary w-full text-center">Hospitals</a>
+                <a href="<?php echo baseUrl(); ?>/messages.php" class="btn btn-small btn-secondary w-full text-center">Messages</a>
                 <a href="<?php echo baseUrl(); ?>/leaderboard.php" class="btn btn-small btn-secondary w-full text-center">View Leaderboard</a>
                 <a href="<?php echo baseUrl(); ?>/donor/edit_profile.php" class="btn btn-small btn-secondary w-full text-center">Edit Profile</a>
                 <a href="<?php echo baseUrl(); ?>/donor/submit_testimonial.php" class="btn btn-small btn-secondary w-full text-center">Share Your Story</a>

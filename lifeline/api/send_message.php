@@ -58,10 +58,10 @@ try {
     
     $stmt = $pdo->prepare("INSERT INTO notifications (user_id, type, title, message, link) VALUES (?, ?, ?, ?, ?)");
     $stmt->execute([
-        $receiverId, 
-        'message', 
-        'New message from ' . $senderName, 
-        'You have received a new message.', 
+        $receiverId,
+        'message',
+        'New message from ' . ($senderName ?: 'Admin'),
+        'You have received a new message.',
         "/messages.php?conversation=$userId"
     ]);
     

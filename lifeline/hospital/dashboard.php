@@ -6,9 +6,13 @@ $userId  = $_SESSION['user_id'];
 $profile = getHospitalProfile($pdo, $userId);
 
 $stmt = $pdo->prepare("
-    SELECT * FROM blood_requests
+    SELECT *, (notes LIKE 'EMERGENCY SOS REQUEST%') AS is_sos
+    FROM blood_requests
     WHERE hospital_id = ?
-    ORDER BY status = 'open' DESC, urgency = 'critical' DESC, created_at DESC
+    ORDER BY (notes LIKE 'EMERGENCY SOS REQUEST%') DESC,
+             status = 'open' DESC,
+             urgency = 'critical' DESC,
+             created_at DESC
 ");
 $stmt->execute([$userId]);
 $requests = $stmt->fetchAll();
@@ -47,7 +51,7 @@ include '../includes/header.php';
                     <table>
                     <thead>
                         <tr>
-                            <th>Patient Type</th>
+                            <th>Type</th>
                             <th>Units</th>
                             <th>Urgency</th>
                             <th>Status</th>
@@ -56,8 +60,13 @@ include '../includes/header.php';
                     </thead>
                     <tbody>
                         <?php foreach ($requests as $req): ?>
-                        <tr>
-                            <td><?php echo htmlspecialchars($req['patient_blood_type']); ?></td>
+                        <tr <?php echo $req['is_sos'] ? 'style="background:rgba(220,38,38,.06)"' : ''; ?>>
+                            <td>
+                                <?php if ($req['is_sos']): ?>
+                                    <span class="badge badge-danger" style="font-size:.68rem;padding:2px 6px;margin-right:4px">&#9888; SOS</span>
+                                <?php endif; ?>
+                                <?php echo htmlspecialchars($req['patient_blood_type']); ?>
+                            </td>
                             <td><?php echo (int)$req['units_needed']; ?></td>
                             <td>
                                 <?php $urgencyPill = $req['urgency'] === 'critical' ? 'pill--danger' : ($req['urgency'] === 'urgent' ? 'pill--warning' : 'pill--info'); ?>
@@ -95,9 +104,6 @@ include '../includes/header.php';
                             <div class="notif-title"><?php echo htmlspecialchars($n['title']); ?></div>
                             <div class="notif-msg"><?php echo htmlspecialchars($n['message']); ?></div>
                             <div class="notif-time"><?php echo date('M j, g:i A', strtotime($n['created_at'])); ?></div>
-                            <?php if ($n['link']): ?>
-                                <a href="<?php echo baseUrl() . $n['link']; ?>" class="notif-link">View Details &rarr;</a>
-                            <?php endif; ?>
                         </div>
                     <?php endforeach; ?>
                 </div>
@@ -110,7 +116,6 @@ include '../includes/header.php';
             <h3>Quick Actions</h3>
             <div class="flex flex-col gap-8 mt-10">
                 <a href="<?php echo baseUrl(); ?>/find_donors.php" class="btn btn-small btn-secondary w-full text-center">Find Donors</a>
-                <a href="<?php echo baseUrl(); ?>/blood_banks.php" class="btn btn-small btn-secondary w-full text-center">Nearby Blood Banks</a>
                 <a href="<?php echo baseUrl(); ?>/messages.php" class="btn btn-small btn-secondary w-full text-center">Messages</a>
                 <a href="<?php echo baseUrl(); ?>/hospital/submit_verification.php" class="btn btn-small btn-secondary w-full text-center">
                     Hospital Verification

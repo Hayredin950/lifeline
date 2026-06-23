@@ -18,11 +18,10 @@
                     <?php elseif (isHospital()): ?>
                         <li><a href="<?php echo baseUrl(); ?>/hospital/dashboard.php">My Dashboard</a></li>
                         <li><a href="<?php echo baseUrl(); ?>/find_donors.php">Find Donors</a></li>
-                        <li><a href="<?php echo baseUrl(); ?>/blood_banks.php">Blood Banks</a></li>
                         <li><a href="<?php echo baseUrl(); ?>/emergency.php">Emergency SOS</a></li>
                     <?php elseif (isDonor()): ?>
                         <li><a href="<?php echo baseUrl(); ?>/find_donors.php">Find Donors</a></li>
-                        <li><a href="<?php echo baseUrl(); ?>/blood_banks.php">Blood Banks</a></li>
+                        <li><a href="<?php echo baseUrl(); ?>/blood_banks.php">Hospitals</a></li>
                         <li><a href="<?php echo baseUrl(); ?>/eligibility.php">Eligibility Check</a></li>
                         <li><a href="<?php echo baseUrl(); ?>/emergency.php">Emergency SOS</a></li>
                         <li><a href="<?php echo baseUrl(); ?>/leaderboard.php">Leaderboard</a></li>

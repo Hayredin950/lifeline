@@ -46,12 +46,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $filter = $_GET['filter'] ?? 'pending';
-$validFilters = ['pending', 'all', 'approved', 'rejected'];
+$validFilters = ['pending', 'all', 'approved', 'rejected', 'unsubmitted'];
 if (!in_array($filter, $validFilters, true)) $filter = 'pending';
 
-$where = $filter === 'all' ? "hp.verification_status != 'unsubmitted'"
-       : "hp.verification_status = ?";
-$params = $filter === 'all' ? [] : [$filter];
+if ($filter === 'all') {
+    $where  = '1=1';
+    $params = [];
+} else {
+    $where  = 'hp.verification_status = ?';
+    $params = [$filter];
+}
 
 $stmt = $pdo->prepare("
     SELECT hp.user_id, hp.hospital_name, hp.city, hp.state, hp.country,
@@ -60,7 +64,7 @@ $stmt = $pdo->prepare("
     FROM hospital_profiles hp
     JOIN users u ON hp.user_id = u.id
     WHERE $where
-    ORDER BY hp.updated_at DESC
+    ORDER BY hp.created_at DESC
 ");
 $stmt->execute($params);
 $hospitals = $stmt->fetchAll();
@@ -75,7 +79,7 @@ include '../includes/header.php';
     </div>
 
     <div class="flex gap-8 mb-20">
-        <?php foreach (['pending' => 'Pending', 'approved' => 'Approved', 'rejected' => 'Rejected', 'all' => 'All'] as $f => $label): ?>
+        <?php foreach (['pending' => 'Pending', 'approved' => 'Approved', 'rejected' => 'Rejected', 'unsubmitted' => 'Unsubmitted', 'all' => 'All'] as $f => $label): ?>
         <a href="?filter=<?php echo $f; ?>"
            class="btn btn-small <?php echo $filter === $f ? '' : 'btn-secondary'; ?>">
             <?php echo $label; ?>
