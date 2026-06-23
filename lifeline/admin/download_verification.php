@@ -18,8 +18,8 @@ if (!$hospital || empty($hospital['verification_doc'])) {
     redirect(baseUrl() . '/admin/verify_hospitals.php');
 }
 
-// Make sure the file exists (upload dir is probably ../uploads/verification/)
-$filePath = __DIR__ . '/../uploads/verification/' . $hospital['verification_doc'];
+// Make sure the file exists (upload dir is ../../uploads/verification/ relative to admin/)
+$filePath = __DIR__ . '/../../uploads/verification/' . $hospital['verification_doc'];
 if (!file_exists($filePath)) {
     setFlash('Document not found on disk', 'danger');
     redirect(baseUrl() . '/admin/verify_hospitals.php');
